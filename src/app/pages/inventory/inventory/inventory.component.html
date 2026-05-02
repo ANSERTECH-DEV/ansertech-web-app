@@ -6,18 +6,26 @@
 
     <div class="filter-section">
       <div class="filter-label">Marca</div>
-      <label *ngFor="let b of brands" class="check-row">
-        <input type="checkbox" [checked]="selectedBrands.includes(b)" (change)="toggleBrand(b)">
-        <span>{{ b }}</span>
-      </label>
+      <div *ngFor="let b of brands" class="field-checkbox">
+        <p-checkbox
+          [(ngModel)]="selectedBrands"
+          [label]="b"
+          name="brand-group"
+          [value]="b"
+          (onChange)="applyFilters()" />
+      </div>
     </div>
 
     <div class="filter-section">
       <div class="filter-label">Categoría</div>
-      <label *ngFor="let c of cats" class="check-row">
-        <input type="checkbox" [checked]="selectedCats.includes(c)" (change)="toggleCat(c)">
-        <span>{{ c }}</span>
-      </label>
+      <div *ngFor="let c of cats" class="field-checkbox">
+        <p-checkbox
+          [(ngModel)]="selectedCats"
+          [label]="c"
+          name="cat-group"
+          [value]="c"
+          (onChange)="applyFilters()" />
+      </div>
     </div>
 
     <div class="filter-section">
@@ -26,16 +34,24 @@
         <span>S/ 0</span>
         <span>S/ {{ maxPrice }}</span>
       </div>
-      <input type="range" min="0" max="3000" step="100"
-             [(ngModel)]="maxPrice" (change)="onPriceChange()" class="price-slider">
+      <p-slider
+        [(ngModel)]="maxPrice"
+        [min]="0"
+        [max]="3000"
+        [step]="100"
+        />
     </div>
 
     <div class="filter-section">
       <div class="filter-label">Disponibilidad</div>
-      <label class="check-row">
-        <input type="checkbox" [(ngModel)]="onlyStock" (change)="onStockChange()">
-        <span>Solo en stock</span>
-      </label>
+      <div class="field-checkbox">
+        <p-checkbox
+          [(ngModel)]="onlyStock"
+          [binary]="true"
+          label="Solo en stock"
+          name="stock-group"
+          (onChange)="onStockChange()" />
+      </div>
     </div>
 
     <button class="btn-bulk" (click)="openBulk()">Carga masiva</button>
