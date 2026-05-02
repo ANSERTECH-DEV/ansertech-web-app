@@ -1,0 +1,119 @@
+.login-bg {
+  min-height: 100vh;
+  background: #f4f6fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-card {
+  display: flex;
+  width: 500px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(26,42,74,.18);
+}
+
+.login-left {
+  width: 170px;
+  flex-shrink: 0;
+  background: #1a2a4a;
+  padding: 36px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  width: 32px;
+  height: 32px;
+  background: #3a8fd1;
+  color: #fff;
+  border-radius: 6px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-brand {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  color: #fff;
+  letter-spacing: 1.5px;
+}
+
+.login-tagline {
+  font-size: 11px;
+  color: #8aa0cc;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.login-right {
+  flex: 1;
+  background: #fff;
+  padding: 32px 24px;
+}
+
+.login-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a2236;
+  margin-bottom: 4px;
+}
+
+.login-subtitle {
+  font-size: 12px;
+  color: #8896b0;
+  margin-bottom: 24px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #4a5568;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #dde3ef;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #1a2236;
+  transition: border-color 0.15s;
+}
+
+.form-control:focus {
+  border-color: #3a8fd1;
+  box-shadow: 0 0 0 3px rgba(58,143,209,.12);
+}
+
+.btn-login {
+  width: 100%;
+  padding: 10px;
+  background: #3a8fd1;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.15s;
+}
+
+.btn-login:hover { background: #2e7ab8; }

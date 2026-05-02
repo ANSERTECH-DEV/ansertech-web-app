@@ -1,0 +1,22 @@
+<p-toolbar class="navbar">
+  <ng-template pTemplate="start">
+    <img src="assets/img/header/company-logo.png" alt="company-logo" height="auto" width="80px">
+    <div class="navbar-brand">
+      <span class="brand-text">ANSER<span class="brand-accent">TECH</span></span>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="center">
+    <div class="navbar-links">
+      <a routerLink="/cotizaciones" routerLinkActive="active" [routerLinkActiveOptions]="{exact:false}">Cotizaciones</a>
+      <a routerLink="/inventario" routerLinkActive="active" [routerLinkActiveOptions]="{exact:false}">Inventario</a>
+      <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact:false}">Dashboard</a>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="end">
+    <div class="navbar-user">
+      <div class="user-avatar">JR</div>
+      <span class="user-name">Juan Reyes</span>
+      <button class="logout-btn" (click)="logout()">↩</button>
+    </div>
+  </ng-template>
+</p-toolbar>

@@ -1,0 +1,60 @@
+<div class="dash-page">
+  <h1 class="page-title">Dashboard</h1>
+
+  <div class="dash-grid-2">
+    <!-- Card: Cotizaciones por estado -->
+    <div class="dash-card">
+      <div class="card-title">Cotizaciones por estado</div>
+      <div class="bar-list">
+        <div *ngFor="let bar of statusBars" class="bar-row">
+          <span class="bar-label">{{ bar.label }}</span>
+          <div class="bar-track">
+            <div class="bar-fill" [style.width.%]="bar.pct" [style.background]="bar.color"></div>
+          </div>
+          <span class="bar-value" [style.color]="bar.color">{{ bar.value }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: KPIs del mes -->
+    <div class="dash-card">
+      <div class="card-title">KPIs del mes</div>
+      <div class="kpi-grid">
+        <div class="kpi-item">
+          <span class="kpi-value">S/28.4k</span>
+          <span class="kpi-label">Total cotizado</span>
+          <span class="kpi-badge green">+12% mes ant.</span>
+        </div>
+        <div class="kpi-item">
+          <span class="kpi-value">11</span>
+          <span class="kpi-label">Aprobadas</span>
+          <span class="kpi-badge green">+3 este mes</span>
+        </div>
+        <div class="kpi-item">
+          <span class="kpi-value">3.2d</span>
+          <span class="kpi-label">Tiempo prom.</span>
+          <span class="kpi-badge gray">días/cotización</span>
+        </div>
+        <div class="kpi-item">
+          <span class="kpi-value">68%</span>
+          <span class="kpi-label">Tasa aprob.</span>
+          <span class="kpi-badge gray">Meta: 70%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card full-width: Clientes más activos -->
+  <div class="dash-card">
+    <div class="card-title">Clientes más activos</div>
+    <div class="bar-list">
+      <div *ngFor="let bar of clientBars" class="bar-row">
+        <span class="bar-label">{{ bar.label }}</span>
+        <div class="bar-track">
+          <div class="bar-fill" [style.width.%]="bar.pct" style="background:#3a8fd1"></div>
+        </div>
+        <span class="bar-value" style="color:#3a8fd1">{{ bar.value }}</span>
+      </div>
+    </div>
+  </div>
+</div>

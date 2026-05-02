@@ -1,0 +1,243 @@
+<div class="inv-page">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="filter-title">FILTROS</div>
+
+    <div class="filter-section">
+      <div class="filter-label">Marca</div>
+      <label *ngFor="let b of brands" class="check-row">
+        <input type="checkbox" [checked]="selectedBrands.includes(b)" (change)="toggleBrand(b)">
+        <span>{{ b }}</span>
+      </label>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-label">Categoría</div>
+      <label *ngFor="let c of cats" class="check-row">
+        <input type="checkbox" [checked]="selectedCats.includes(c)" (change)="toggleCat(c)">
+        <span>{{ c }}</span>
+      </label>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-label">Precio máx.</div>
+      <div class="price-range">
+        <span>S/ 0</span>
+        <span>S/ {{ maxPrice }}</span>
+      </div>
+      <input type="range" min="0" max="3000" step="100"
+             [(ngModel)]="maxPrice" (change)="onPriceChange()" class="price-slider">
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-label">Disponibilidad</div>
+      <label class="check-row">
+        <input type="checkbox" [(ngModel)]="onlyStock" (change)="onStockChange()">
+        <span>Solo en stock</span>
+      </label>
+    </div>
+
+    <button class="btn-bulk" (click)="openBulk()">Carga masiva</button>
+  </aside>
+
+  <!-- Main area -->
+  <div class="inv-main">
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Buscar producto, código, marca..."
+      [(ngModel)]="searchText"
+      (ngModelChange)="onSearch()">
+
+    <div class="product-grid">
+      <div
+        *ngFor="let p of filteredProducts"
+        class="product-card"
+        (click)="openDetail(p)">
+        <div class="card-img">{{ p.icon }}</div>
+        <div class="card-name">{{ p.name }}</div>
+        <div class="card-meta">{{ p.brand }} · {{ p.cat }}</div>
+        <div class="card-footer">
+          <span class="card-price">S/ {{ p.price }}</span>
+          <span class="stock-badge" [class.in-stock]="p.stock" [class.out-stock]="!p.stock">
+            {{ p.stock ? 'En stock (' + p.units + ')' : 'Agotado' }}
+          </span>
+        </div>
+      </div>
+      <div *ngIf="filteredProducts.length === 0" class="empty-grid">
+        Sin resultados para los filtros seleccionados.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Detalle de producto -->
+<div class="modal-overlay" *ngIf="showDetail" (click)="closeDetail()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div *ngIf="editMode" class="edit-bar">✏️ Modo edición activo</div>
+
+    <div class="modal-header">
+      <h3>{{ selectedProduct?.name }}</h3>
+      <button class="modal-close" (click)="closeDetail()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-img-col">
+        <span class="modal-icon">{{ selectedProduct?.icon }}</span>
+      </div>
+
+      <div class="modal-info-col">
+        <div class="stock-indicator">
+          <span class="stock-dot" [class.dot-ok]="selectedProduct?.stock" [class.dot-out]="!selectedProduct?.stock"></span>
+          <span *ngIf="selectedProduct?.stock">{{ selectedProduct?.units }} unidades disponibles</span>
+          <span *ngIf="!selectedProduct?.stock">Sin existencias</span>
+        </div>
+
+        <div class="modal-price">S/ {{ editMode ? editForm.price : selectedProduct?.price }}</div>
+
+        <div class="modal-fields">
+          <div class="field-group">
+            <label>Nombre</label>
+            <input [(ngModel)]="editForm.name" [disabled]="!editMode">
+          </div>
+          <div class="field-group">
+            <label>Marca</label>
+            <input [(ngModel)]="editForm.brand" [disabled]="!editMode">
+          </div>
+          <div class="field-group">
+            <label>Categoría</label>
+            <input [(ngModel)]="editForm.cat" [disabled]="!editMode">
+          </div>
+          <div class="field-group">
+            <label>Precio (S/)</label>
+            <input type="number" [(ngModel)]="editForm.price" [disabled]="!editMode">
+          </div>
+          <div class="field-group">
+            <label>Unidades en stock</label>
+            <input type="number" [(ngModel)]="editForm.units" [disabled]="!editMode">
+          </div>
+          <div class="field-group">
+            <label>Estado</label>
+            <input [value]="selectedProduct?.stock ? 'En stock' : 'Agotado'" disabled>
+          </div>
+        </div>
+
+        <div class="modal-desc">{{ selectedProduct?.desc }}</div>
+
+        <button *ngIf="editMode" class="btn-save" (click)="saveEdit()">✓ Guardar</button>
+        <button class="btn-edit" [class.editing]="editMode" (click)="toggleEdit()">✏</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Carga masiva -->
+<div class="modal-overlay" *ngIf="showBulk" (click)="closeBulk()">
+  <div class="modal-bulk" (click)="$event.stopPropagation()">
+    <!-- Tabs -->
+    <div class="bulk-tabs">
+      <button class="bulk-tab" [class.active]="bulkTab === 'Productos'" (click)="bulkTab = 'Productos'">Productos</button>
+      <button class="bulk-tab" [class.active]="bulkTab === 'Precios'"   (click)="bulkTab = 'Precios'">Precios</button>
+    </div>
+
+    <div class="bulk-body">
+      <!-- Upload zone -->
+      <div
+        class="upload-zone"
+        [class.drag-over]="dragOver"
+        [class.has-file]="!!bulkFile"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave()"
+        (drop)="onDrop($event)"
+        (click)="!bulkFile && fileInput.click()">
+
+        <ng-container *ngIf="!bulkFile">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1a2a4a" stroke-width="1.5">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span class="upload-label">Arrastra tu archivo</span>
+          <span class="upload-sub">o haz click para seleccionar</span>
+          <span class="upload-badge">.xlsx · .csv</span>
+        </ng-container>
+
+        <ng-container *ngIf="bulkFile">
+          <div class="file-chip">
+            <span>{{ bulkFile.name }}</span>
+            <button (click)="$event.stopPropagation(); removeFile()">×</button>
+          </div>
+        </ng-container>
+      </div>
+      <input #fileInput type="file" accept=".xlsx,.csv" style="display:none" (change)="onFileSelect($event)">
+
+      <!-- List area -->
+      <div class="bulk-list">
+        <!-- TAB PRODUCTOS -->
+        <ng-container *ngIf="bulkTab === 'Productos'">
+          <div *ngIf="!bulkFile" class="bulk-empty">
+            <div class="bulk-empty-title">Sin datos aún</div>
+            <div class="bulk-empty-sub">Sube un archivo .xlsx o .csv para visualizar los productos y cantidades</div>
+          </div>
+          <ng-container *ngIf="bulkFile">
+            <div class="bulk-list-header">
+              <span>PRODUCTO</span>
+              <span style="text-align:center">CANTIDAD A INGRESAR</span>
+            </div>
+            <div *ngFor="let row of bulkProductsMock" class="bulk-row">
+              <div>
+                <div class="bulk-row-name">{{ row.name }}</div>
+                <div class="bulk-row-meta">{{ row.brand }}</div>
+              </div>
+              <div style="text-align:center">
+                <span class="badge-qty">{{ row.qty }}</span>
+              </div>
+            </div>
+          </ng-container>
+        </ng-container>
+
+        <!-- TAB PRECIOS -->
+        <ng-container *ngIf="bulkTab === 'Precios'">
+          <div *ngIf="!bulkFile" class="bulk-empty">
+            <div class="bulk-empty-title">Sin datos aún</div>
+            <div class="bulk-empty-sub">Sube un archivo .xlsx o .csv para visualizar los precios</div>
+          </div>
+          <ng-container *ngIf="bulkFile">
+            <div class="bulk-list-header bulk-list-header-3">
+              <span>PRODUCTO</span>
+              <span style="text-align:center">PRECIO ANTIGUO</span>
+              <span style="text-align:center">NUEVO PRECIO</span>
+            </div>
+            <div *ngFor="let row of bulkPricesMock" class="bulk-row bulk-row-3">
+              <div>
+                <div class="bulk-row-name">{{ row.name }}</div>
+                <div class="bulk-row-meta">{{ row.brand }}</div>
+              </div>
+              <div style="text-align:center">
+                <span class="price-old">S/ {{ row.old }}</span>
+              </div>
+              <div style="text-align:center">
+                <span class="price-new" [ngClass]="'price-' + priceDiff(row)">S/ {{ row.nuevo }}</span>
+              </div>
+            </div>
+          </ng-container>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="bulk-footer">
+      <span class="bulk-summary" *ngIf="bulkTab === 'Productos'">
+        {{ bulkFile ? bulkProductsMock.length + ' productos · ' + totalUnits() + ' unidades a ingresar' : 'Sin archivo' }}
+      </span>
+      <span class="bulk-summary" *ngIf="bulkTab === 'Precios'">
+        {{ bulkFile ? bulkPricesMock.length + ' productos · ' + bulkDifferentCount() + ' con precio diferente' : 'Sin archivo' }}
+      </span>
+      <div class="bulk-footer-actions">
+        <button class="btn-cancel-bulk" (click)="closeBulk()">Cancelar</button>
+        <button class="btn-finish" [disabled]="!bulkFile" (click)="finalizeBulk()">Finalizar</button>
+      </div>
+    </div>
+  </div>
+</div>

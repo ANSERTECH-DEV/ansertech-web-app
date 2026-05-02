@@ -1,0 +1,80 @@
+::ng-deep .p-toolbar{
+  border: none;
+  border-radius: 0;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.brand-text {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.brand-accent { color: #48a9f8; }
+
+::ng-deep .navbar .p-toolbar{
+  background: #1a2a4a;
+}
+
+.navbar-links a{
+  color: #c0d3fb;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 5px;
+  border-bottom: 2px solid transparent;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.navbar-links a:hover{
+  color: white;
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #48a9f8;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-name {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.logout-btn {
+  background: none;
+  border: none;
+  color: #8aa0cc;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.logout-btn:hover { color: #fff; }

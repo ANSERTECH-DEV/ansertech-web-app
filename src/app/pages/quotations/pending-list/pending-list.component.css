@@ -1,0 +1,123 @@
+.page { display: flex; flex-direction: column; gap: 14px; }
+
+/* Topbar */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a2a4a;
+}
+
+.tabs { display: flex; gap: 4px; }
+
+.tab-btn {
+  padding: 5px 14px;
+  border: none;
+  background: transparent;
+  color: #4a5568;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tab-btn:hover { background: #e8f0fc; }
+.tab-btn.active { background: #1a2a4a; color: #fff; }
+
+/* Stat cards */
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.stat-card {
+  background: #fff;
+  border: 1px solid #dde3ef;
+  border-radius: 8px;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stat-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.stat-info { display: flex; flex-direction: column; gap: 2px; }
+
+.stat-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: #8896b0;
+  letter-spacing: 0.6px;
+}
+
+.stat-value {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* Tabla */
+.row-checking:hover { background: #d1fae5; }
+
+/* Nombres e IDs */
+.col-solicitud { display: flex; flex-direction: column; gap: 2px; }
+.row-name { font-size: 12px; font-weight: 600; color: #1a2236; }
+.row-id   { font-size: 10px; color: #8896b0; }
+
+.col-cliente { font-size: 11px; color: #4a5568; }
+.col-fecha   { font-size: 11px; color: #8896b0; }
+
+.col-monto {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #3a8fd1;
+}
+
+/* Pills */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pill-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pill-en-cola     { background: #fef3c7; color: #92400e; }
+.pill-en-cola     .pill-dot { background: #d97706; }
+
+.pill-en-proceso  { background: #dbeafe; color: #1e40af; }
+.pill-en-proceso  .pill-dot { background: #3a8fd1; }
+
+.pill-por-aprobar    { background: #d1fae5; color: #065f46; }
+.pill-por-aprobar    .pill-dot { background: #059669; }
