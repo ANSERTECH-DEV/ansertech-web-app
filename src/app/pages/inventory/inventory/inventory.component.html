@@ -54,33 +54,40 @@
       </div>
     </div>
 
-    <button class="btn-bulk" (click)="openBulk()">Carga masiva</button>
+    <p-button label="Carga masiva" styleClass="btn-bulk" (onClick)="openBulk()" />
   </aside>
 
   <!-- Main area -->
   <div class="inv-main">
-    <input
-      type="text"
-      class="search-input"
-      placeholder="Buscar producto, código, marca..."
-      [(ngModel)]="searchText"
-      (ngModelChange)="onSearch()">
+    <p-floatLabel class="search-field">
+      <input
+        pInputText
+        id="search"
+        type="text"
+        [(ngModel)]="searchText"
+        (ngModelChange)="onSearch()" />
+      <label for="search">Buscar producto, código, marca...</label>
+    </p-floatLabel>
 
     <div class="product-grid">
-      <div
+      <p-card
         *ngFor="let p of filteredProducts"
-        class="product-card"
+        [header]="p.name"
+        [subheader]="p.brand + ' · ' + p.cat"
+        styleClass="product-card"
         (click)="openDetail(p)">
-        <div class="card-img">{{ p.icon }}</div>
-        <div class="card-name">{{ p.name }}</div>
-        <div class="card-meta">{{ p.brand }} · {{ p.cat }}</div>
-        <div class="card-footer">
-          <span class="card-price">S/ {{ p.price }}</span>
-          <span class="stock-badge" [class.in-stock]="p.stock" [class.out-stock]="!p.stock">
-            {{ p.stock ? 'En stock (' + p.units + ')' : 'Agotado' }}
-          </span>
-        </div>
-      </div>
+        <ng-template pTemplate="header">
+          <div class="card-img">{{ p.icon }}</div>
+        </ng-template>
+        <ng-template pTemplate="footer">
+          <div class="card-footer">
+            <span class="card-price">S/ {{ p.price }}</span>
+            <span class="stock-badge" [class.in-stock]="p.stock" [class.out-stock]="!p.stock">
+              {{ p.stock ? 'En stock (' + p.units + ')' : 'Agotado' }}
+            </span>
+          </div>
+        </ng-template>
+      </p-card>
       <div *ngIf="filteredProducts.length === 0" class="empty-grid">
         Sin resultados para los filtros seleccionados.
       </div>
