@@ -66,21 +66,7 @@ export class InventoryComponent implements OnInit {
     });
   }
 
-  toggleBrand(b: string): void {
-    this.selectedBrands = this.selectedBrands.includes(b)
-      ? this.selectedBrands.filter(x => x !== b)
-      : [...this.selectedBrands, b];
-    this.applyFilters();
-  }
-
-  toggleCat(c: string): void {
-    this.selectedCats = this.selectedCats.includes(c)
-      ? this.selectedCats.filter(x => x !== c)
-      : [...this.selectedCats, c];
-    this.applyFilters();
-  }
-
-  onPriceChange(): void { this.applyFilters(); }
+onPriceChange(): void { this.applyFilters(); }
   onStockChange(): void { this.applyFilters(); }
   onSearch(): void { this.applyFilters(); }
 

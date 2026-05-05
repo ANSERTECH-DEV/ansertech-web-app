@@ -6,18 +6,26 @@
 
     <div class="filter-section">
       <div class="filter-label">Marca</div>
-      <label *ngFor="let b of brands" class="check-row">
-        <input type="checkbox" [checked]="selectedBrands.includes(b)" (change)="toggleBrand(b)">
-        <span>{{ b }}</span>
-      </label>
+      <div *ngFor="let b of brands" class="field-checkbox">
+        <p-checkbox
+          [(ngModel)]="selectedBrands"
+          [label]="b"
+          name="brand-group"
+          [value]="b"
+          (onChange)="applyFilters()" />
+      </div>
     </div>
 
     <div class="filter-section">
       <div class="filter-label">Categoría</div>
-      <label *ngFor="let c of cats" class="check-row">
-        <input type="checkbox" [checked]="selectedCats.includes(c)" (change)="toggleCat(c)">
-        <span>{{ c }}</span>
-      </label>
+      <div *ngFor="let c of cats" class="field-checkbox">
+        <p-checkbox
+          [(ngModel)]="selectedCats"
+          [label]="c"
+          name="cat-group"
+          [value]="c"
+          (onChange)="applyFilters()" />
+      </div>
     </div>
 
     <div class="filter-section">
@@ -26,45 +34,60 @@
         <span>S/ 0</span>
         <span>S/ {{ maxPrice }}</span>
       </div>
-      <input type="range" min="0" max="3000" step="100"
-             [(ngModel)]="maxPrice" (change)="onPriceChange()" class="price-slider">
+      <p-slider
+        [(ngModel)]="maxPrice"
+        [min]="0"
+        [max]="3000"
+        [step]="100"
+        />
     </div>
 
     <div class="filter-section">
       <div class="filter-label">Disponibilidad</div>
-      <label class="check-row">
-        <input type="checkbox" [(ngModel)]="onlyStock" (change)="onStockChange()">
-        <span>Solo en stock</span>
-      </label>
+      <div class="field-checkbox">
+        <p-checkbox
+          [(ngModel)]="onlyStock"
+          [binary]="true"
+          label="Solo en stock"
+          name="stock-group"
+          (onChange)="onStockChange()" />
+      </div>
     </div>
 
-    <button class="btn-bulk" (click)="openBulk()">Carga masiva</button>
+    <p-button label="Carga masiva" styleClass="btn-bulk" (onClick)="openBulk()" />
   </aside>
 
   <!-- Main area -->
   <div class="inv-main">
-    <input
-      type="text"
-      class="search-input"
-      placeholder="Buscar producto, código, marca..."
-      [(ngModel)]="searchText"
-      (ngModelChange)="onSearch()">
+    <p-floatLabel class="search-field">
+      <input
+        pInputText
+        id="search"
+        type="text"
+        [(ngModel)]="searchText"
+        (ngModelChange)="onSearch()" />
+      <label for="search">Buscar producto, código, marca...</label>
+    </p-floatLabel>
 
     <div class="product-grid">
-      <div
+      <p-card
         *ngFor="let p of filteredProducts"
-        class="product-card"
+        [header]="p.name"
+        [subheader]="p.brand + ' · ' + p.cat"
+        styleClass="product-card"
         (click)="openDetail(p)">
-        <div class="card-img">{{ p.icon }}</div>
-        <div class="card-name">{{ p.name }}</div>
-        <div class="card-meta">{{ p.brand }} · {{ p.cat }}</div>
-        <div class="card-footer">
-          <span class="card-price">S/ {{ p.price }}</span>
-          <span class="stock-badge" [class.in-stock]="p.stock" [class.out-stock]="!p.stock">
-            {{ p.stock ? 'En stock (' + p.units + ')' : 'Agotado' }}
-          </span>
-        </div>
-      </div>
+        <ng-template pTemplate="header">
+          <div class="card-img">{{ p.icon }}</div>
+        </ng-template>
+        <ng-template pTemplate="footer">
+          <div class="card-footer">
+            <span class="card-price">S/ {{ p.price }}</span>
+            <span class="stock-badge" [class.in-stock]="p.stock" [class.out-stock]="!p.stock">
+              {{ p.stock ? 'En stock (' + p.units + ')' : 'Agotado' }}
+            </span>
+          </div>
+        </ng-template>
+      </p-card>
       <div *ngIf="filteredProducts.length === 0" class="empty-grid">
         Sin resultados para los filtros seleccionados.
       </div>
