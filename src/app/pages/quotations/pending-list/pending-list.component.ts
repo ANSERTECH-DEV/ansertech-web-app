@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { CotizacionesService } from '../../../services/cotizaciones.service';
-import {Quotation} from "../../../shared/model/quotation.dto";
+import { RfqService } from '../../../services/rfq.service';
+import { RfqResponse } from '../../../core/models/rfq.model';
 
 @Component({
   selector: 'app-pending-list',
@@ -11,46 +11,40 @@ import {Quotation} from "../../../shared/model/quotation.dto";
 export class PendingListComponent implements OnInit {
   stateOptions:any[]=[
     {name: 'Todas',value: 'Todas'},
-    {name: 'En cola',value: 'En cola'},
     {name: 'En proceso',value: 'En proceso'},
-    {name: 'Por aprobar',value: 'Por aprobar'},
+    {name: 'Por aprobar',value: 'Por aprobar'}
   ]
   activeTab = 'Todas';
-  items: Quotation[] = [];
+  items: RfqResponse[] = [];
+  totalItems: number = 0;
 
-  constructor(private svc: CotizacionesService, private router: Router) {}
+  constructor(private rfqService: RfqService, private router: Router) {}
 
-  /**
-   * Angular lifecycle hook that runs after component initialization.
-   *
-   * Triggers the initial filtering of items based on the default active tab.
-   */
   ngOnInit(): void { this.applyFilter(); }
 
-  /**
-   * Filters the list of items based on the currently selected tab.
-   *
-   * Uses the CotizacionesService to retrieve items matching the active status
-   * and updates the local items collection.
-   */
-  applyFilter(): void { this.items = this.svc.filterByStatus(this.activeTab); }
-
-  /**
-   * Counts the number of quotations based on states
-   *
-   * Uses the CotizacionesService to retrieve amount of records for each state
-   * @param status
-   */
-  count(status: string): number { return this.svc.countByStatus(status); }
-
-  /**
-   * Redirects to quotation-details view
-   *
-   * Uses a quotation object and its id to redirect
-   * @param item
-   */
-  goToChecking(item: Quotation): void {
-    this.router.navigate(['/cotizaciones', item.id, 'checking']);
+  applyFilter(): void {
+    this.rfqService.getRfqs(this.activeTab).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.items = res.data.content;
+          this.totalItems = res.data.totalElements;
+        }
+      },
+      error: (err) => console.error('Error fetching RFQs', err)
+    });
   }
 
+  getDisplayStatus(status: string): string {
+    switch(status) {
+      case 'IN_PROGRESS': return 'En proceso';
+      case 'PENDING_REVIEW': return 'Por aprobar';
+      case 'QUOTED': return 'Cotizado';
+      case 'REJECTED': return 'Rechazado';
+      default: return status;
+    }
+  }
+
+  goToChecking(item: RfqResponse): void {
+    this.router.navigate(['/cotizaciones', item.id, 'checking']);
+  }
 }

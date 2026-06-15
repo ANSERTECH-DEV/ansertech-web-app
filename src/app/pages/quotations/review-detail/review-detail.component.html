@@ -1,142 +1,77 @@
-<div class="checking-page">
-  <!-- Topbar -->
+<div class="page" *ngIf="rfq">
   <div class="topbar">
-    <div class="topbar-left">
-      <button class="btn-back" (click)="goBack()">← Volver</button>
-      <div class="topbar-info">
-        <h1 class="topbar-title">{{ cotizacion?.id }} — {{ cotizacion?.name }}</h1>
-        <span class="topbar-sub">Creado: {{ cotizacion?.date }} · Actualizado: {{ cotizacion?.date }}</span>
-      </div>
+    <div class="back-btn" (click)="goBack()">
+      <span>← Volver</span>
     </div>
-    <span class="pill-checking">Checking</span>
+    <h1 class="page-title">Revisar RFQ #{{ rfq.id }}</h1>
+    <div class="actions" *ngIf="rfq.status === 'PENDING_REVIEW'">
+      <button class="btn btn-secondary">Descartar</button>
+      <button class="btn btn-primary" (click)="approve()" [disabled]="approving">
+        {{ approving ? 'Generando Cotización...' : 'Aprobar y Cotizar' }}
+      </button>
+    </div>
   </div>
 
-  <!-- 2 columnas -->
-  <div class="checking-body">
-
-    <!-- Columna izquierda: Documento -->
-    <div class="col-left">
-      <div class="doc-scroll">
-        <div class="doc">
-          <div class="doc-header">
-            <div class="doc-brand">
-              <div class="doc-logo">AT</div>
-              <div>
-                <div class="doc-brand-name">ANSER TECH</div>
-                <div class="doc-brand-sub">PERÚ S.A.C.</div>
-              </div>
-            </div>
-            <div class="doc-contact">
-              <div>Jr. Los Laureles 245, Lima</div>
-              <div>Tel: (01) 234-5678</div>
-              <div>ventas@ansertech.pe</div>
-            </div>
-          </div>
-
-          <div class="doc-title-bar">COTIZACIÓN SV.0202.2025</div>
-
-          <div class="doc-body">
-            <div class="doc-info-grid">
-              <div class="doc-info-section">
-                <div class="doc-section-header">DATOS DEL CLIENTE</div>
-                <div class="doc-row"><span class="doc-label">Empresa</span><span>{{ cotizacion?.client }}</span></div>
-                <div class="doc-row"><span class="doc-label">Contacto</span><span>Gerente de compras</span></div>
-                <div class="doc-row"><span class="doc-label">Email</span><span>compras@cliente.pe</span></div>
-              </div>
-              <div class="doc-info-section">
-                <div class="doc-section-header">ORDEN DE COMPRA</div>
-                <div class="doc-row"><span class="doc-label">N° OC</span><span>OC-2025-{{ cotizacion?.id?.slice(-3) }}</span></div>
-                <div class="doc-row"><span class="doc-label">Fecha</span><span>{{ cotizacion?.date }} 2025</span></div>
-                <div class="doc-row"><span class="doc-label">Moneda</span><span>Soles (S/)</span></div>
-              </div>
-            </div>
-
-            <table class="doc-table">
-              <thead>
-                <tr><th>#</th><th>Est.</th><th>Equipo</th><th>Cant.</th><th>P.U.</th><th>Total</th></tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let item of docItems" [ngClass]="'est-' + item.est.toLowerCase()">
-                  <td>{{ item.num }}</td>
-                  <td><span class="est-badge">{{ item.est }}</span></td>
-                  <td>{{ item.equipo }}</td>
-                  <td style="text-align:center">{{ item.cant }}</td>
-                  <td>{{ item.pu }}</td>
-                  <td>{{ item.total }}</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <div class="doc-totals">
-              <div class="total-row"><span>Sub Total</span><span>S/ 2,890</span></div>
-              <div class="total-row"><span>IGV 18%</span><span>S/ 520.20</span></div>
-              <div class="total-row total-bold"><span>TOTAL</span><span>S/ 3,410.20</span></div>
-            </div>
-
-            <div class="doc-conditions">
-              Condiciones: Validez 15 días. Pago 50% adelanto, 50% contra entrega. Tiempo de entrega 5-10 días hábiles.
-            </div>
-
-            <div class="doc-firma">
-              <div class="firma-name">Antuanné Chipayo C.</div>
-              <div class="firma-dept">Dept. Administrativo — Ansertech Perú S.A.C.</div>
-            </div>
-          </div>
+  <div class="content-grid">
+    <!-- Panel Izquierdo: Info de RFQ -->
+    <div class="left-panel">
+      <div class="card detail-card">
+        <h3>Datos del Cliente</h3>
+        <div class="detail-row">
+          <span class="lbl">Empresa:</span>
+          <span class="val">{{ rfq.clientCompany || rfq.clientName || 'No especificado' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="lbl">Email:</span>
+          <span class="val">{{ rfq.clientEmail || 'No especificado' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="lbl">Teléfono:</span>
+          <span class="val">{{ rfq.clientPhone || 'No especificado' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="lbl">Urgencia:</span>
+          <span class="val" [ngClass]="{'high-urgency': rfq.urgency === 'HIGH'}">{{ rfq.urgency }}</span>
         </div>
       </div>
 
-      <div class="doc-actions">
-        <button class="btn-approve">✓ Aprobar cotización</button>
-        <button class="btn-review-req">↩ Solicitar revisión</button>
+      <div class="card note-card" *ngIf="rfq.notes">
+        <h3>Notas Adicionales</h3>
+        <p>{{ rfq.notes }}</p>
       </div>
     </div>
 
-    <!-- Columna derecha: Análisis -->
-    <div class="col-right">
-      <div class="analysis-scroll">
-        <div class="analysis-card">
-          <div class="card-two-cols">
-            <div class="card-half">
-              <div class="card-section-title">🔍 Palabras clave detectadas</div>
-              <div class="keyword-tags">
-                <span *ngFor="let kw of keywords" class="keyword-tag">{{ kw }}</span>
-              </div>
-            </div>
-            <div class="card-divider"></div>
-            <div class="card-half">
-              <div class="card-section-title">✉ Detalles del correo</div>
-              <div class="email-badge">CORREO</div>
-              <div class="email-row"><span class="email-lbl">Asunto</span><span>Solicitud cotización maquinaria</span></div>
-              <div class="email-row"><span class="email-lbl">De</span><span>compras@adecomine.pe</span></div>
-              <div class="email-row"><span class="email-lbl">Fecha</span><span>05 May 2025 · 09:42 am</span></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="analysis-card">
-          <div class="card-section-title" style="margin-bottom:10px">📦 Verificación de stock</div>
-          <table class="stock-table">
-            <thead>
-              <tr><th>Producto</th><th>Solicitado</th><th>En stock</th></tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let s of stockItems">
-                <td>{{ s.product }}</td>
-                <td style="text-align:center">{{ s.requested }}</td>
-                <td style="text-align:center">
-                  <span *ngIf="!hasStockIssue(s)" class="stock-ok">{{ s.inStock }}</span>
-                  <span *ngIf="hasStockIssue(s)" class="stock-warn">⚠ {{ s.inStock }}</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="stock-legend">
-            <span><span class="legend-dot green"></span> Stock suficiente</span>
-            <span><span class="legend-dot red"></span> Stock insuficiente</span>
-          </div>
-        </div>
+    <!-- Panel Derecho: Lista de Items Extraídos -->
+    <div class="right-panel">
+      <div class="card doc-card">
+        <h3>Productos Extraídos ({{ rfq.items.length }})</h3>
+        <table class="doc-table">
+          <thead>
+          <tr>
+            <th>Item</th>
+            <th>Descripción del Producto</th>
+            <th>Código</th>
+            <th>Cantidad</th>
+            <th>Unidad</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let item of rfq.items; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td class="col-desc"><strong>{{ item.productDescription }}</strong></td>
+            <td>{{ item.productCode || '-' }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.unit }}</td>
+          </tr>
+          </tbody>
+        </table>
       </div>
     </div>
+  </div>
+</div>
 
+<div class="page" *ngIf="loading">
+  <div class="topbar">
+    <h1 class="page-title">Cargando datos...</h1>
   </div>
 </div>
