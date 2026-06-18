@@ -14,9 +14,7 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   login(request: LoginRequest) {
-    console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAA");
-    
-    return this.http.post(`${this.apiUrl}/login`,request);
+    return this.http.post(`${this.apiUrl}/login`, request);
 
     // return this.http.post<ApiResponse<AuthResponse>>(`${this.apiUrl}/login`, request)
     //   .pipe(map(response => {

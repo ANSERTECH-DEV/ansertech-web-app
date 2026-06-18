@@ -33,7 +33,11 @@ export class RfqService {
     return this.http.get<ApiResponse<RfqResponse>>(`${this.apiUrl}/${id}`);
   }
 
-  confirm(id: number): Observable<ApiResponse<string>> {
-    return this.http.post<ApiResponse<string>>(`${this.apiUrl}/${id}/confirm`, {});
+  confirm(id: number): Observable<ApiResponse<number>> {
+    return this.http.post<ApiResponse<number>>(`${this.apiUrl}/${id}/confirm`, {});
+  }
+
+  reject(id: number): Observable<ApiResponse<string>> {
+    return this.http.post<ApiResponse<string>>(`${this.apiUrl}/${id}/reject`, {});
   }
 }
