@@ -32,3 +32,19 @@ export interface Page<T> {
   size: number;
   number: number;
 }
+
+export interface StockCheckItem {
+  rfqItemId: number;
+  rfqDescription: string;
+  quantityRequested: number;
+  unitRequested: string;
+  matched: boolean;
+  productId?: number;
+  productSku?: string;
+  productName?: string;
+  similarityScore?: number;
+  matchReason?: string;
+  stockQuantity?: number;
+  stockUnit?: string;
+  stockSufficient?: boolean;
+}

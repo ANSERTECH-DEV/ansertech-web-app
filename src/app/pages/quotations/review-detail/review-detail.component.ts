@@ -2,14 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RfqService } from '../../../services/rfq.service';
 import { QuotationService } from '../../../services/quotation.service';
-import { RfqResponse } from '../../../core/models/rfq.model';
+import { RfqResponse, StockCheckItem } from '../../../core/models/rfq.model';
 import { QuotationResponse } from '../../../core/models/quotation.model';
-
-interface StockItem {
-  product: string;
-  requested: number;
-  inStock: number;
-}
 
 @Component({
   selector: 'app-review-detail',
@@ -22,16 +16,8 @@ export class ReviewDetailComponent implements OnInit {
   loading = false;
   approving = false;
   rejecting = false;
-
-  // Dato de ejemplo: solo se usa antes de aprobar, mientras no existe verificación de stock real
-  stockItems: StockItem[] = [
-    { product: 'Estufa de secado 1000L',    requested: 1, inStock: 3 },
-    { product: 'Balanza precisión 220gr',   requested: 2, inStock: 5 },
-    { product: 'Sensor temperatura tipo K', requested: 2, inStock: 1 },
-    { product: 'Termómetro infrarojo',      requested: 1, inStock: 0 },
-    { product: 'Termohigrómetro ext.',      requested: 1, inStock: 2 },
-    { product: 'Pesas calibración F1',      requested: 3, inStock: 2 },
-  ];
+  stockItems: StockCheckItem[] = [];
+  loadingStock = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -53,6 +39,7 @@ export class ReviewDetailComponent implements OnInit {
       next: (res) => {
         if (res.success) {
           this.rfq = res.data;
+          this.loadStockCheck(id);
         }
         this.loading = false;
       },
@@ -60,6 +47,17 @@ export class ReviewDetailComponent implements OnInit {
         console.error('Error cargando RFQ', err);
         this.loading = false;
       }
+    });
+  }
+
+  loadStockCheck(id: number): void {
+    this.loadingStock = true;
+    this.rfqService.stockCheck(id).subscribe({
+      next: (res) => {
+        if (res.success) this.stockItems = res.data;
+        this.loadingStock = false;
+      },
+      error: () => { this.loadingStock = false; }
     });
   }
 
@@ -130,7 +128,7 @@ export class ReviewDetailComponent implements OnInit {
     return value != null ? `${Math.round(value * 100)}%` : '-';
   }
 
-  hasStockIssue(item: StockItem): boolean {
-    return item.inStock < item.requested;
+  hasStockIssue(item: StockCheckItem): boolean {
+    return !item.matched || item.stockSufficient === false;
   }
 }

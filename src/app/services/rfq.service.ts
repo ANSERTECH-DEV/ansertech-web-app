@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiResponse } from '../core/models/api-response.model';
-import { RfqResponse, Page } from '../core/models/rfq.model';
+import { RfqResponse, Page, StockCheckItem } from '../core/models/rfq.model';
 
 @Injectable({ providedIn: 'root' })
 export class RfqService {
@@ -39,5 +39,9 @@ export class RfqService {
 
   reject(id: number): Observable<ApiResponse<string>> {
     return this.http.post<ApiResponse<string>>(`${this.apiUrl}/${id}/reject`, {});
+  }
+
+  stockCheck(id: number): Observable<ApiResponse<StockCheckItem[]>> {
+    return this.http.get<ApiResponse<StockCheckItem[]>>(`${this.apiUrl}/${id}/stock-check`);
   }
 }

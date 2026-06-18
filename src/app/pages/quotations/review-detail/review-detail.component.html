@@ -157,25 +157,45 @@
         </div>
 
         <div class="analysis-card" *ngIf="!quotation">
-          <div class="card-section-title" style="margin-bottom:10px">📦 Verificación de stock (ejemplo)</div>
-          <table class="stock-table">
+          <div class="card-section-title" style="margin-bottom:10px">
+            📦 Verificación de stock
+            <span *ngIf="loadingStock" class="stock-analyzing"> · Analizando con IA...</span>
+          </div>
+
+          <div *ngIf="loadingStock" class="stock-loading">Gemini está buscando coincidencias en inventario...</div>
+
+          <table class="stock-table" *ngIf="!loadingStock && stockItems.length > 0">
             <thead>
-              <tr><th>Producto</th><th>Solicitado</th><th>En stock</th></tr>
+              <tr><th>Descripción RFQ → Producto</th><th>Solicitado</th><th>Stock</th><th>IA</th></tr>
             </thead>
             <tbody>
               <tr *ngFor="let s of stockItems">
-                <td>{{ s.product }}</td>
-                <td style="text-align:center">{{ s.requested }}</td>
+                <td>
+                  <div class="stock-product-name">{{ s.matched ? s.productName : s.rfqDescription }}</div>
+                  <div class="stock-rfq-desc" *ngIf="s.matched">{{ s.rfqDescription }}</div>
+                  <div class="stock-no-match" *ngIf="!s.matched">Sin coincidencia en inventario</div>
+                </td>
+                <td style="text-align:center">{{ s.quantityRequested }} {{ s.unitRequested }}</td>
                 <td style="text-align:center">
-                  <span *ngIf="!hasStockIssue(s)" class="stock-ok">{{ s.inStock }}</span>
-                  <span *ngIf="hasStockIssue(s)" class="stock-warn">⚠ {{ s.inStock }}</span>
+                  <span *ngIf="s.matched && s.stockSufficient"  class="stock-ok">✓ {{ s.stockQuantity }}</span>
+                  <span *ngIf="s.matched && !s.stockSufficient" class="stock-warn">⚠ {{ s.stockQuantity }}</span>
+                  <span *ngIf="!s.matched"                      class="stock-warn">—</span>
+                </td>
+                <td style="text-align:center">
+                  <span *ngIf="s.matched" class="similarity-badge" [class.high]="s.similarityScore! >= 0.8" [class.mid]="s.similarityScore! >= 0.5 && s.similarityScore! < 0.8">
+                    {{ (s.similarityScore! * 100) | number:'1.0-0' }}%
+                  </span>
+                  <span *ngIf="!s.matched" class="similarity-badge low">—</span>
                 </td>
               </tr>
             </tbody>
           </table>
+
+          <div *ngIf="!loadingStock && stockItems.length === 0" class="stock-loading">Sin ítems para verificar.</div>
+
           <div class="stock-legend">
             <span><span class="legend-dot green"></span> Stock suficiente</span>
-            <span><span class="legend-dot red"></span> Stock insuficiente</span>
+            <span><span class="legend-dot red"></span> Stock insuficiente / no encontrado</span>
           </div>
         </div>
 
