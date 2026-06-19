@@ -54,7 +54,14 @@
       </div>
     </div>
 
-    <p-button label="Carga masiva" styleClass="btn-bulk" (onClick)="openBulk()" />
+    <div class="low-stock-alert" *ngIf="lowStockCount > 0">
+      ⚠ {{ lowStockCount }} producto{{ lowStockCount > 1 ? 's' : '' }} con stock bajo
+    </div>
+
+    <div class="sidebar-actions">
+      <p-button label="+ Nuevo" styleClass="btn-new-product" (onClick)="openCreate()" />
+      <p-button label="Carga masiva" styleClass="btn-bulk" (onClick)="openBulk()" />
+    </div>
   </aside>
 
   <!-- Main area -->
@@ -266,5 +273,95 @@
         <button class="btn-finish" [disabled]="!bulkFile" (click)="finalizeBulk()">Finalizar</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Modal: Nuevo Producto -->
+<div class="modal-overlay" *ngIf="showCreate" (click)="closeCreate()">
+  <div class="modal-create" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h3>Nuevo Producto</h3>
+      <button class="modal-close" (click)="closeCreate()">✕</button>
+    </div>
+
+    <div class="create-form">
+      <div class="create-row">
+        <div class="field-group">
+          <label>SKU <span class="req">*</span></label>
+          <input [(ngModel)]="createForm.sku" placeholder="Ej: CAM-IP-002">
+        </div>
+        <div class="field-group">
+          <label>Nombre <span class="req">*</span></label>
+          <input [(ngModel)]="createForm.name" placeholder="Nombre del producto">
+        </div>
+      </div>
+
+      <div class="create-row">
+        <div class="field-group">
+          <label>Categoría</label>
+          <select [(ngModel)]="createForm.category">
+            <option value="">-- Seleccionar --</option>
+            <option *ngFor="let c of createCategories" [value]="c">{{ c }}</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Marca</label>
+          <input [(ngModel)]="createForm.brand" placeholder="Ej: Hikvision">
+        </div>
+      </div>
+
+      <div class="create-row">
+        <div class="field-group">
+          <label>Precio unitario (S/) <span class="req">*</span></label>
+          <input type="number" [(ngModel)]="createForm.unitPrice" placeholder="0.00" min="0">
+        </div>
+        <div class="field-group">
+          <label>Moneda</label>
+          <select [(ngModel)]="createForm.currency">
+            <option value="PEN">PEN — Soles</option>
+            <option value="USD">USD — Dólares</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="create-row">
+        <div class="field-group">
+          <label>Stock inicial <span class="req">*</span></label>
+          <input type="number" [(ngModel)]="createForm.stockQuantity" placeholder="0" min="0">
+        </div>
+        <div class="field-group">
+          <label>Stock mínimo (alerta)</label>
+          <input type="number" [(ngModel)]="createForm.minStockThreshold" placeholder="5" min="0">
+        </div>
+      </div>
+
+      <div class="create-row">
+        <div class="field-group">
+          <label>Unidad</label>
+          <input [(ngModel)]="createForm.unit" placeholder="Ej: unidad, m, par">
+        </div>
+        <div class="field-group">
+          <label>Proveedor</label>
+          <input [(ngModel)]="createForm.supplierName" placeholder="Nombre del proveedor">
+        </div>
+      </div>
+
+      <div class="field-group" style="grid-column: 1/-1">
+        <label>Descripción</label>
+        <textarea [(ngModel)]="createForm.description" rows="3"
+                  placeholder="Descripción técnica del producto..."></textarea>
+      </div>
+    </div>
+
+    <div class="create-footer">
+      <button class="btn-cancel-bulk" (click)="closeCreate()">Cancelar</button>
+      <button class="btn-finish"
+              [disabled]="creating || !createForm.sku || !createForm.name"
+              (click)="submitCreate()">
+        {{ creating ? 'Guardando...' : 'Guardar producto' }}
+      </button>
+    </div>
+
   </div>
 </div>

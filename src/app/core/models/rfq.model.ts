@@ -47,4 +47,5 @@ export interface StockCheckItem {
   stockQuantity?: number;
   stockUnit?: string;
   stockSufficient?: boolean;
+  unitPrice?: number;
 }

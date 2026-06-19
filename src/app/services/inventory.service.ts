@@ -12,10 +12,12 @@ export class InventoryService {
 
   constructor(private http: HttpClient) {}
 
-  getAll(page: number = 0, size: number = 100): Observable<ApiResponse<Page<ProductResponse>>> {
-    const params = new HttpParams()
+  getAll(page: number = 0, size: number = 100, search?: string, category?: string): Observable<ApiResponse<Page<ProductResponse>>> {
+    let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString());
+    if (search)   params = params.set('search', search);
+    if (category) params = params.set('category', category);
     return this.http.get<ApiResponse<Page<ProductResponse>>>(this.apiUrl, { params });
   }
 

@@ -131,4 +131,24 @@ export class ReviewDetailComponent implements OnInit {
   hasStockIssue(item: StockCheckItem): boolean {
     return !item.matched || item.stockSufficient === false;
   }
+
+  getUnitPrice(rfqItemId: number): number | undefined {
+    return this.stockItems.find(s => s.rfqItemId === rfqItemId && s.matched)?.unitPrice;
+  }
+
+  getEstimatedSubtotal(): number {
+    if (!this.rfq) return 0;
+    return this.rfq.items.reduce((sum, item) => {
+      const price = this.getUnitPrice(item.id);
+      return sum + (price != null ? price * item.quantity : 0);
+    }, 0);
+  }
+
+  getEstimatedIgv(): number {
+    return this.getEstimatedSubtotal() * 0.18;
+  }
+
+  getEstimatedTotal(): number {
+    return this.getEstimatedSubtotal() + this.getEstimatedIgv();
+  }
 }

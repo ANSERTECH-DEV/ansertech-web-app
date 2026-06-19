@@ -70,8 +70,8 @@
                   </td>
                   <td style="text-align:center">{{ item.quantity }}</td>
                   <td>{{ item.unit }}</td>
-                  <td>—</td>
-                  <td>—</td>
+                  <td>{{ getUnitPrice(item.id) != null ? ('S/ ' + (getUnitPrice(item.id) | number:'1.2-2')) : '—' }}</td>
+                  <td>{{ getUnitPrice(item.id) != null ? ('S/ ' + ((getUnitPrice(item.id)! * item.quantity) | number:'1.2-2')) : '—' }}</td>
                 </tr>
               </tbody>
             </table>
@@ -93,9 +93,9 @@
             </table>
 
             <div class="doc-totals" *ngIf="!quotation">
-              <div class="total-row"><span>Sub Total</span><span>Por cotizar</span></div>
-              <div class="total-row"><span>IGV 18%</span><span>Por cotizar</span></div>
-              <div class="total-row total-bold"><span>TOTAL</span><span>Por cotizar</span></div>
+              <div class="total-row"><span>Sub Total</span><span>S/ {{ getEstimatedSubtotal() | number:'1.2-2' }}</span></div>
+              <div class="total-row"><span>IGV 18%</span><span>S/ {{ getEstimatedIgv() | number:'1.2-2' }}</span></div>
+              <div class="total-row total-bold"><span>TOTAL</span><span>S/ {{ getEstimatedTotal() | number:'1.2-2' }}</span></div>
             </div>
 
             <div class="doc-totals" *ngIf="quotation">

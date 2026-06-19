@@ -5,6 +5,12 @@ import { ProductResponse, ProductRequest } from '../../../core/models/product.mo
 interface BulkProductRow { name: string; brand: string; qty: number; }
 interface BulkPriceRow  { name: string; brand: string; old: number; nuevo: number; }
 
+const DEFAULT_CATEGORIES = [
+  'pH / ORP', 'Colorímetro', 'Multiparámetro', 'Conductividad',
+  'Videovigilancia', 'Sensores', 'Automatización', 'Materiales eléctricos',
+  'Servicios', 'EPP',
+];
+
 @Component({
   selector: 'app-inventory',
   templateUrl: './inventory.component.html',
@@ -26,12 +32,21 @@ export class InventoryComponent implements OnInit {
   filteredProducts: ProductResponse[] = [];
   loading = false;
 
-  /* Product detail modal */
+  /* Low stock badge */
+  lowStockCount = 0;
+
+  /* Product detail modal (edit) */
   showDetail = false;
   selectedProduct?: ProductResponse;
   editMode = false;
   editForm: Partial<ProductResponse> = {};
   saving = false;
+
+  /* Create product modal */
+  showCreate = false;
+  creating = false;
+  createForm: Partial<ProductRequest> = {};
+  createCategories: string[] = DEFAULT_CATEGORIES;
 
   /* Bulk upload modal */
   showBulk = false;
@@ -57,7 +72,10 @@ export class InventoryComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProducts();
+    this.loadLowStockCount();
   }
+
+  // ── Data loading ──────────────────────────────────────────────────────────
 
   loadProducts(): void {
     this.loading = true;
@@ -77,6 +95,15 @@ export class InventoryComponent implements OnInit {
     });
   }
 
+  loadLowStockCount(): void {
+    this.inventoryService.getLowStock().subscribe({
+      next: (res) => { if (res.success) this.lowStockCount = res.data.length; },
+      error: () => {}
+    });
+  }
+
+  // ── Filters ───────────────────────────────────────────────────────────────
+
   private initFilters(): void {
     const brandSet = new Set(this.allProducts.map(p => p.brand).filter(b => !!b));
     this.brands = Array.from(brandSet).sort();
@@ -90,6 +117,10 @@ export class InventoryComponent implements OnInit {
     const maxP = prices.length ? Math.max(...prices) : 6000;
     this.priceMax = Math.ceil(maxP / 1000) * 1000;
     this.maxPrice = this.priceMax;
+
+    // Merge categories from DB into the create-form list
+    const allCats = new Set([...DEFAULT_CATEGORIES, ...this.cats]);
+    this.createCategories = Array.from(allCats).sort();
   }
 
   applyFilters(): void {
@@ -111,6 +142,8 @@ export class InventoryComponent implements OnInit {
   onStockChange(): void { this.applyFilters(); }
   onSearch(): void { this.applyFilters(); }
 
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
   getIcon(category: string): string {
     const map: Record<string, string> = {
       'pH / ORP':              '⚗️',
@@ -131,6 +164,8 @@ export class InventoryComponent implements OnInit {
     return !!p && Number(p.stockQuantity) > 0;
   }
 
+  // ── Detail / Edit modal ───────────────────────────────────────────────────
+
   openDetail(p: ProductResponse): void {
     this.selectedProduct = { ...p };
     this.editForm = { ...p };
@@ -147,16 +182,16 @@ export class InventoryComponent implements OnInit {
     const id = this.selectedProduct.id;
 
     const req: ProductRequest = {
-      sku:              this.selectedProduct.sku,
-      name:             this.editForm.name     || this.selectedProduct.name,
-      category:         this.editForm.category,
-      description:      this.editForm.description,
-      unit:             this.editForm.unit,
-      stockQuantity:    Number(this.editForm.stockQuantity ?? this.selectedProduct.stockQuantity),
-      unitPrice:        Number(this.editForm.unitPrice     ?? this.selectedProduct.unitPrice),
-      currency:         this.editForm.currency,
-      supplierName:     this.editForm.supplierName,
-      brand:            this.editForm.brand,
+      sku:           this.selectedProduct.sku,
+      name:          this.editForm.name     || this.selectedProduct.name,
+      category:      this.editForm.category,
+      description:   this.editForm.description,
+      unit:          this.editForm.unit,
+      stockQuantity: Number(this.editForm.stockQuantity ?? this.selectedProduct.stockQuantity),
+      unitPrice:     Number(this.editForm.unitPrice     ?? this.selectedProduct.unitPrice),
+      currency:      this.editForm.currency,
+      supplierName:  this.editForm.supplierName,
+      brand:         this.editForm.brand,
     };
 
     this.inventoryService.update(id, req).subscribe({
@@ -183,7 +218,51 @@ export class InventoryComponent implements OnInit {
     this.editMode = false;
     this.showDetail = false;
     this.loadProducts();
+    this.loadLowStockCount();
   }
+
+  // ── Create product modal ──────────────────────────────────────────────────
+
+  openCreate(): void {
+    this.createForm = { currency: 'PEN', stockQuantity: 0, unitPrice: 0, minStockThreshold: 5 };
+    this.showCreate = true;
+  }
+
+  closeCreate(): void { this.showCreate = false; this.createForm = {}; }
+
+  submitCreate(): void {
+    if (!this.createForm.sku || !this.createForm.name) return;
+    this.creating = true;
+    const req: ProductRequest = {
+      sku:               this.createForm.sku,
+      name:              this.createForm.name,
+      category:          this.createForm.category,
+      description:       this.createForm.description,
+      unit:              this.createForm.unit,
+      stockQuantity:     Number(this.createForm.stockQuantity ?? 0),
+      minStockThreshold: Number(this.createForm.minStockThreshold ?? 5),
+      unitPrice:         Number(this.createForm.unitPrice ?? 0),
+      currency:          this.createForm.currency || 'PEN',
+      supplierName:      this.createForm.supplierName,
+      brand:             this.createForm.brand,
+    };
+    this.inventoryService.create(req).subscribe({
+      next: (res) => {
+        this.creating = false;
+        if (res.success) {
+          this.closeCreate();
+          this.loadProducts();
+          this.loadLowStockCount();
+        }
+      },
+      error: (err) => {
+        console.error('Error creando producto', err);
+        this.creating = false;
+      }
+    });
+  }
+
+  // ── Bulk upload modal ─────────────────────────────────────────────────────
 
   openBulk(): void { this.showBulk = true; this.bulkFile = null; this.bulkTab = 'Productos'; }
   closeBulk(): void { this.showBulk = false; this.bulkFile = null; }
