@@ -103,3 +103,18 @@
 
 .kpi-badge.green { background: #d1fae5; color: #065f46; }
 .kpi-badge.gray  { background: #eef1f7; color: #4a5568; }
+
+.btn-export {
+  background: #1a2a4a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.btn-export:hover:not(:disabled) { background: #3a8fd1; }
+.btn-export:disabled { opacity: 0.6; cursor: not-allowed; }

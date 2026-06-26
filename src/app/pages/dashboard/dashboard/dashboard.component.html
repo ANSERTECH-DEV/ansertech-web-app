@@ -57,4 +57,20 @@
       </div>
     </div>
   </div>
+
+  <!-- Card: Exportar reporte -->
+  <div class="dash-card">
+    <div class="card-title">Reportes</div>
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+      <div>
+        <div style="font-weight:600; color:#1a2a4a; margin-bottom:4px;">Reporte de correos procesados</div>
+        <div style="font-size:13px; color:#666;">
+          Exporta el detalle de cada correo recibido: remitente, spam, % extracción y cantidad de productos solicitados.
+        </div>
+      </div>
+      <button class="btn-export" (click)="exportEmails()" [disabled]="exporting">
+        {{ exporting ? 'Generando...' : '↓ Descargar Excel' }}
+      </button>
+    </div>
+  </div>
 </div>
