@@ -9,6 +9,7 @@ import { environment } from '../../../../environments/environment';
 })
 export class DashboardComponent {
   exporting = false;
+  exportingInventory = false;
 
   statusBars = [
     { label: 'En cola',    pct: 50, color: '#d97706', value: 8 },
@@ -40,6 +41,26 @@ export class DashboardComponent {
         console.error('Error exportando reporte', err);
         alert('Error al generar el reporte. Intente nuevamente.');
         this.exporting = false;
+      }
+    });
+  }
+
+  exportInventory(): void {
+    this.exportingInventory = true;
+    this.http.get(`${environment.apiUrl}/inventory/export`, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `inventario-${new Date().toISOString().slice(0,10)}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exportingInventory = false;
+      },
+      error: (err) => {
+        console.error('Error exportando inventario', err);
+        alert('Error al generar el inventario. Intente nuevamente.');
+        this.exportingInventory = false;
       }
     });
   }

@@ -58,18 +58,31 @@
     </div>
   </div>
 
-  <!-- Card: Exportar reporte -->
+  <!-- Card: Exportar reportes -->
   <div class="dash-card">
     <div class="card-title">Reportes</div>
-    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding-bottom:14px; border-bottom:1px solid #e8ecf0;">
       <div>
         <div style="font-weight:600; color:#1a2a4a; margin-bottom:4px;">Reporte de correos procesados</div>
         <div style="font-size:13px; color:#666;">
-          Exporta el detalle de cada correo recibido: remitente, spam, % extracción y cantidad de productos solicitados.
+          Detalle de cada correo recibido: remitente, spam, % extracción, inventario y tiempos del pipeline.
         </div>
       </div>
       <button class="btn-export" (click)="exportEmails()" [disabled]="exporting">
         {{ exporting ? 'Generando...' : '↓ Descargar Excel' }}
+      </button>
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding-top:14px;">
+      <div>
+        <div style="font-weight:600; color:#1a2a4a; margin-bottom:4px;">Inventario de productos</div>
+        <div style="font-size:13px; color:#666;">
+          Lista completa de productos: SKU, nombre, categoría, descripción, stock, precio y proveedor.
+        </div>
+      </div>
+      <button class="btn-export" (click)="exportInventory()" [disabled]="exportingInventory">
+        {{ exportingInventory ? 'Generando...' : '↓ Descargar Excel' }}
       </button>
     </div>
   </div>
