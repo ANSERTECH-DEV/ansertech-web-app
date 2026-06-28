@@ -9,14 +9,16 @@ import { RfqResponse } from '../../../core/models/rfq.model';
   styleUrls: ['./pending-list.component.css']
 })
 export class PendingListComponent implements OnInit {
-  stateOptions:any[]=[
-    {name: 'Todas',value: 'Todas'},
-    {name: 'En proceso',value: 'En proceso'},
-    {name: 'Por aprobar',value: 'Por aprobar'}
-  ]
+  stateOptions: any[] = [
+    { name: 'Todas',        value: 'Todas' },
+    { name: 'Procesando',   value: 'Procesando' },
+    { name: 'Por aprobar',  value: 'Por aprobar' },
+    { name: 'Cotizando',    value: 'Cotizando' },
+  ];
   activeTab = 'Todas';
   items: RfqResponse[] = [];
   totalItems: number = 0;
+  refreshing = false;
 
   constructor(private rfqService: RfqService, private router: Router) {}
 
@@ -29,22 +31,35 @@ export class PendingListComponent implements OnInit {
           this.items = res.data.content;
           this.totalItems = res.data.totalElements;
         }
+        this.refreshing = false;
       },
-      error: (err) => console.error('Error fetching RFQs', err)
+      error: (err) => { console.error('Error fetching RFQs', err); this.refreshing = false; }
     });
   }
 
+  refresh(): void {
+    this.refreshing = true;
+    this.applyFilter();
+  }
+
   getDisplayStatus(status: string): string {
-    switch(status) {
-      case 'IN_PROGRESS': return 'En proceso';
-      case 'PENDING_REVIEW': return 'Por aprobar';
-      case 'QUOTED': return 'Cotizado';
-      case 'REJECTED': return 'Rechazado';
-      default: return status;
+    switch (status) {
+      case 'PROCESSING':    return 'Procesando';
+      case 'PENDING_REVIEW':return 'Por aprobar';
+      case 'QUOTING':       return 'Cotizando';
+      case 'QUOTED':        return 'Cotizado';
+      case 'REJECTED':      return 'Rechazado';
+      default:              return status;
     }
   }
 
+  isClickable(item: RfqResponse): boolean {
+    return item.status === 'PENDING_REVIEW' || item.status === 'PROCESSING';
+  }
+
   goToChecking(item: RfqResponse): void {
-    this.router.navigate(['/cotizaciones', item.id, 'checking']);
+    if (this.isClickable(item)) {
+      this.router.navigate(['/cotizaciones', item.id, 'checking']);
+    }
   }
 }

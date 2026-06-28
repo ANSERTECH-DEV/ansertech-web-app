@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RfqService } from '../../../services/rfq.service';
 import { QuotationService } from '../../../services/quotation.service';
-import { RfqResponse, StockCheckItem } from '../../../core/models/rfq.model';
+import { RfqResponse, StockCheckItem, StockCheckResultResponse } from '../../../core/models/rfq.model';
 import { QuotationResponse } from '../../../core/models/quotation.model';
 
 @Component({
@@ -10,14 +10,16 @@ import { QuotationResponse } from '../../../core/models/quotation.model';
   templateUrl: './review-detail.component.html',
   styleUrls: ['./review-detail.component.css']
 })
-export class ReviewDetailComponent implements OnInit {
+export class ReviewDetailComponent implements OnInit, OnDestroy {
   rfq?: RfqResponse;
   quotation?: QuotationResponse;
   loading = false;
   approving = false;
   rejecting = false;
-  stockItems: StockCheckItem[] = [];
+  stockResult?: StockCheckResultResponse;
   loadingStock = false;
+
+  private pollInterval?: ReturnType<typeof setInterval>;
 
   constructor(
     private route: ActivatedRoute,
@@ -33,6 +35,26 @@ export class ReviewDetailComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.stopPolling();
+  }
+
+  get stockItems(): StockCheckItem[] {
+    return this.stockResult?.items ?? [];
+  }
+
+  get isStockProcessing(): boolean {
+    return this.stockResult?.status === 'PROCESSING' || (!this.stockResult && this.loadingStock);
+  }
+
+  get isStockFailed(): boolean {
+    return this.stockResult?.status === 'FAILED';
+  }
+
+  get isStockDone(): boolean {
+    return this.stockResult?.status === 'DONE';
+  }
+
   loadRfq(id: number): void {
     this.loading = true;
     this.rfqService.getById(id).subscribe({
@@ -43,22 +65,57 @@ export class ReviewDetailComponent implements OnInit {
         }
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Error cargando RFQ', err);
-        this.loading = false;
-      }
+      error: () => { this.loading = false; }
     });
   }
 
   loadStockCheck(id: number): void {
     this.loadingStock = true;
+    this.stopPolling();
     this.rfqService.stockCheck(id).subscribe({
       next: (res) => {
-        if (res.success) this.stockItems = res.data;
         this.loadingStock = false;
+        if (res.success) {
+          this.stockResult = res.data;
+          if (res.data.status === 'PROCESSING') {
+            this.startPolling(id);
+          }
+        }
       },
       error: () => { this.loadingStock = false; }
     });
+  }
+
+  refreshStockCheck(): void {
+    if (!this.rfq) return;
+    this.loadStockCheck(this.rfq.id);
+  }
+
+  private startPolling(rfqId: number): void {
+    this.pollInterval = setInterval(() => {
+      this.rfqService.stockCheck(rfqId).subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.stockResult = res.data;
+            if (res.data.status !== 'PROCESSING') {
+              this.stopPolling();
+              if (this.rfq && this.rfq.status === 'PROCESSING') {
+                this.rfqService.getById(rfqId).subscribe({
+                  next: r => { if (r.success) this.rfq = r.data; }
+                });
+              }
+            }
+          }
+        }
+      });
+    }, 3000);
+  }
+
+  private stopPolling(): void {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = undefined;
+    }
   }
 
   approve(): void {
@@ -116,10 +173,11 @@ export class ReviewDetailComponent implements OnInit {
 
   getDisplayStatus(status: string): string {
     switch (status) {
+      case 'PROCESSING':    return 'Procesando';
       case 'PENDING_REVIEW': return 'Por aprobar';
-      case 'IN_PROGRESS': return 'En proceso';
-      case 'QUOTED': return 'Cotizado';
-      case 'REJECTED': return 'Rechazado';
+      case 'QUOTING':       return 'Cotizando';
+      case 'QUOTED':        return 'Cotizado';
+      case 'REJECTED':      return 'Rechazado';
       default: return status;
     }
   }

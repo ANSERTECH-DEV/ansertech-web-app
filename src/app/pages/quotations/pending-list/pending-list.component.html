@@ -2,6 +2,9 @@
   <!--Topbar-->
   <div class="topbar">
     <h1 class="page-title">Cotizaciones</h1>
+    <button class="btn-refresh" (click)="refresh()" [disabled]="refreshing" title="Actualizar estados">
+      {{ refreshing ? '⟳' : '↻' }} Actualizar
+    </button>
     <div class="tabs">
       <p-selectButton
         [allowEmpty]="false"
@@ -63,7 +66,7 @@
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-item>
-      <tr [class.row-checking]="item.status === 'PENDING_REVIEW'" (click)="item.status === 'PENDING_REVIEW'?goToChecking(item):$any('')">
+      <tr [class.row-checking]="isClickable(item)" (click)="goToChecking(item)">
         <td class="col-solicitud">
           <span class="row-name">RFQ #{{ item.id }}</span>
           <span class="row-id">{{ item.clientEmail || 'Sin correo' }}</span>

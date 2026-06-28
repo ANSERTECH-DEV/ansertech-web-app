@@ -122,6 +122,11 @@
         </div>
       </div>
 
+      <div class="doc-actions processing-banner" *ngIf="!quotation && rfq.status === 'PROCESSING'">
+        <span class="processing-dot"></span>
+        Gemini está procesando el RFQ, por favor espera...
+      </div>
+
       <div class="doc-actions" *ngIf="!quotation && rfq.status === 'PENDING_REVIEW'">
         <button class="btn-approve" (click)="approve()" [disabled]="approving">
           {{ approving ? 'Generando Cotización...' : '✓ Aprobar y Cotizar' }}
@@ -159,41 +164,55 @@
         <div class="analysis-card" *ngIf="!quotation">
           <div class="card-section-title" style="margin-bottom:10px">
             📦 Verificación de stock
-            <span *ngIf="loadingStock" class="stock-analyzing"> · Analizando con IA...</span>
+            <button class="btn-refresh-stock" (click)="refreshStockCheck()" [disabled]="loadingStock || isStockProcessing" title="Refrescar">↺</button>
           </div>
 
-          <div *ngIf="loadingStock" class="stock-loading">Gemini está buscando coincidencias en inventario...</div>
+          <!-- PROCESSING: Gemini en cola / ejecutando -->
+          <div *ngIf="isStockProcessing" class="stock-processing">
+            <span class="processing-dot"></span>
+            Gemini procesando inventario...
+            <div class="stock-processing-hint">Se actualizará automáticamente</div>
+          </div>
 
-          <table class="stock-table" *ngIf="!loadingStock && stockItems.length > 0">
-            <thead>
-              <tr><th>Descripción RFQ → Producto</th><th>Solicitado</th><th>Stock</th><th>IA</th></tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let s of stockItems">
-                <td>
-                  <div class="stock-product-name">{{ s.matched ? s.productName : s.rfqDescription }}</div>
-                  <div class="stock-rfq-desc" *ngIf="s.matched">{{ s.rfqDescription }}</div>
-                  <div class="stock-no-match" *ngIf="!s.matched">Sin coincidencia en inventario</div>
-                </td>
-                <td style="text-align:center">{{ s.quantityRequested }} {{ s.unitRequested }}</td>
-                <td style="text-align:center">
-                  <span *ngIf="s.matched && s.stockSufficient"  class="stock-ok">✓ {{ s.stockQuantity }}</span>
-                  <span *ngIf="s.matched && !s.stockSufficient" class="stock-warn">⚠ {{ s.stockQuantity }}</span>
-                  <span *ngIf="!s.matched"                      class="stock-warn">—</span>
-                </td>
-                <td style="text-align:center">
-                  <span *ngIf="s.matched" class="similarity-badge" [class.high]="s.similarityScore! >= 0.8" [class.mid]="s.similarityScore! >= 0.5 && s.similarityScore! < 0.8">
-                    {{ (s.similarityScore! * 100) | number:'1.0-0' }}%
-                  </span>
-                  <span *ngIf="!s.matched" class="similarity-badge low">—</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <!-- FAILED: error en stock-check -->
+          <div *ngIf="isStockFailed" class="stock-failed">
+            <div>⚠ Error en el análisis de stock</div>
+            <div class="stock-failed-msg" *ngIf="stockResult?.errorMessage">{{ stockResult!.errorMessage }}</div>
+            <button class="btn-retry-stock" (click)="refreshStockCheck()">Reintentar</button>
+          </div>
 
-          <div *ngIf="!loadingStock && stockItems.length === 0" class="stock-loading">Sin ítems para verificar.</div>
+          <!-- DONE: tabla de resultados -->
+          <ng-container *ngIf="isStockDone">
+            <table class="stock-table" *ngIf="stockItems.length > 0">
+              <thead>
+                <tr><th>Descripción RFQ → Producto</th><th>Solicitado</th><th>Stock</th><th>IA</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let s of stockItems">
+                  <td>
+                    <div class="stock-product-name">{{ s.matched ? s.productName : s.rfqDescription }}</div>
+                    <div class="stock-rfq-desc" *ngIf="s.matched">{{ s.rfqDescription }}</div>
+                    <div class="stock-no-match" *ngIf="!s.matched">Sin coincidencia en inventario</div>
+                  </td>
+                  <td style="text-align:center">{{ s.quantityRequested }} {{ s.unitRequested }}</td>
+                  <td style="text-align:center">
+                    <span *ngIf="s.matched && s.stockSufficient"  class="stock-ok">✓ {{ s.stockQuantity }}</span>
+                    <span *ngIf="s.matched && !s.stockSufficient" class="stock-warn">⚠ {{ s.stockQuantity }}</span>
+                    <span *ngIf="!s.matched"                      class="stock-warn">—</span>
+                  </td>
+                  <td style="text-align:center">
+                    <span *ngIf="s.matched" class="similarity-badge" [class.high]="s.similarityScore! >= 0.8" [class.mid]="s.similarityScore! >= 0.5 && s.similarityScore! < 0.8">
+                      {{ (s.similarityScore! * 100) | number:'1.0-0' }}%
+                    </span>
+                    <span *ngIf="!s.matched" class="similarity-badge low">—</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div *ngIf="stockItems.length === 0" class="stock-loading">Sin ítems para verificar.</div>
+          </ng-container>
 
-          <div class="stock-legend">
+          <div class="stock-legend" *ngIf="isStockDone && stockItems.length > 0">
             <span><span class="legend-dot green"></span> Stock suficiente</span>
             <span><span class="legend-dot red"></span> Stock insuficiente / no encontrado</span>
           </div>

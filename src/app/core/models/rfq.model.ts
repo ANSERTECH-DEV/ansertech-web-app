@@ -17,7 +17,7 @@ export interface RfqResponse {
   clientPhone: string;
   urgency: string;
   extractionConfidence: number;
-  status: 'PENDING_REVIEW' | 'IN_PROGRESS' | 'REJECTED' | 'QUOTED';
+  status: 'PROCESSING' | 'PENDING_REVIEW' | 'QUOTING' | 'QUOTED' | 'REJECTED';
   notes: string;
   conversionProbability: number;
   items: RfqItemResponse[];
@@ -48,4 +48,12 @@ export interface StockCheckItem {
   stockUnit?: string;
   stockSufficient?: boolean;
   unitPrice?: number;
+}
+
+export interface StockCheckResultResponse {
+  rfqId: number;
+  status: 'PROCESSING' | 'DONE' | 'FAILED';
+  items?: StockCheckItem[];
+  processedAt?: string;
+  errorMessage?: string;
 }
