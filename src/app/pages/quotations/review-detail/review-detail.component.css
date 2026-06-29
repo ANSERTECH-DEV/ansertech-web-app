@@ -367,3 +367,107 @@
 
 .legend-dot.green { background: #059669; }
 .legend-dot.red   { background: #dc2626; }
+
+/* Stock check — IA matching */
+.stock-analyzing { font-size: 11px; color: #6b7280; font-weight: 400; }
+.stock-loading   { padding: 10px 4px; font-size: 12px; color: #6b7280; text-align: center; }
+.stock-product-name { font-weight: 600; font-size: 12px; color: #1a2a4a; }
+.stock-rfq-desc  { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+.stock-no-match  { font-size: 10px; color: #dc2626; margin-top: 2px; }
+
+.similarity-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+.similarity-badge.high { background: #d1fae5; color: #065f46; }
+.similarity-badge.mid  { background: #fef3c7; color: #92400e; }
+.similarity-badge.low  { background: #fee2e2; color: #991b1b; }
+
+/* Processing dot animation */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+.processing-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3a8fd1;
+  animation: pulse-dot 1.2s ease-in-out infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* Stock processing state */
+.stock-processing {
+  padding: 14px 4px;
+  font-size: 12px;
+  color: #3a8fd1;
+  text-align: center;
+  font-weight: 500;
+}
+.stock-processing-hint {
+  font-size: 10px;
+  color: #9ca3af;
+  font-weight: 400;
+  margin-top: 4px;
+}
+
+/* Stock failed state */
+.stock-failed {
+  padding: 12px 8px;
+  font-size: 12px;
+  color: #dc2626;
+  text-align: center;
+}
+.stock-failed-msg {
+  font-size: 10px;
+  color: #9ca3af;
+  margin: 4px 0 8px;
+  word-break: break-word;
+}
+.btn-retry-stock {
+  padding: 4px 12px;
+  font-size: 11px;
+  background: #fff;
+  color: #dc2626;
+  border: 1px solid #dc2626;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.btn-retry-stock:hover { background: #fee2e2; }
+
+/* Refresh button next to stock title */
+.btn-refresh-stock {
+  margin-left: 8px;
+  padding: 1px 7px;
+  font-size: 13px;
+  background: none;
+  border: 1px solid #dde3ef;
+  border-radius: 4px;
+  color: #6b7280;
+  cursor: pointer;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+.btn-refresh-stock:hover:not(:disabled) { border-color: #3a8fd1; color: #3a8fd1; }
+.btn-refresh-stock:disabled { opacity: 0.4; cursor: default; }
+
+/* Processing banner in doc-actions */
+.processing-banner {
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  color: #3a8fd1;
+  font-weight: 500;
+  padding: 10px;
+  background: #eff6ff;
+  border-radius: 6px;
+  border: 1px solid #bfdbfe;
+}

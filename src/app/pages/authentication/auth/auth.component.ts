@@ -13,9 +13,21 @@ export class AuthComponent {
 
   constructor(private authService: AuthService, private router: Router) {}
 
-  onSubmit(): void {
-    if (this.authService.login(this.email, this.password)) {
-      this.router.navigate(['/cotizaciones']);
-    }
+  onSubmit(): void {  
+    this.authService.login({email:this.email, password:this.password}).subscribe({
+      next: (res:any) => {
+        if (res.success && res.data.token){
+          this.authService.saveToken(res.data.token);
+        }
+        this.router.navigate(['/cotizaciones']);
+      },
+      error: (err) => {
+        console.error(err);
+        
+      }
+    });
+    // if (this.authService.login({email:this.email, password:this.password})) {
+    //   this.router.navigate(['/cotizaciones']);
+    // }
   }
 }

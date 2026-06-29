@@ -1,0 +1,49 @@
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { ApiResponse } from '../core/models/api-response.model';
+import { RfqResponse, Page, StockCheckResultResponse } from '../core/models/rfq.model';
+
+@Injectable({ providedIn: 'root' })
+export class RfqService {
+  private apiUrl = `${environment.apiUrl}/rfqs`;
+
+  constructor(private http: HttpClient) {}
+
+  getRfqs(status?: string, page: number = 0, size: number = 20): Observable<ApiResponse<Page<RfqResponse>>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+      
+    if (status && status !== 'Todas') {
+      const map: Record<string, string> = {
+        'Procesando':  'PROCESSING',
+        'Por aprobar': 'PENDING_REVIEW',
+        'Cotizando':   'QUOTING',
+        'Cotizado':    'QUOTED',
+        'Rechazado':   'REJECTED',
+      };
+      const backendStatus = map[status];
+      if (backendStatus) params = params.set('status', backendStatus);
+    }
+
+    return this.http.get<ApiResponse<Page<RfqResponse>>>(this.apiUrl, { params });
+  }
+
+  getById(id: number): Observable<ApiResponse<RfqResponse>> {
+    return this.http.get<ApiResponse<RfqResponse>>(`${this.apiUrl}/${id}`);
+  }
+
+  confirm(id: number): Observable<ApiResponse<number>> {
+    return this.http.post<ApiResponse<number>>(`${this.apiUrl}/${id}/confirm`, {});
+  }
+
+  reject(id: number): Observable<ApiResponse<string>> {
+    return this.http.post<ApiResponse<string>>(`${this.apiUrl}/${id}/reject`, {});
+  }
+
+  stockCheck(id: number): Observable<ApiResponse<StockCheckResultResponse>> {
+    return this.http.get<ApiResponse<StockCheckResultResponse>>(`${this.apiUrl}/${id}/stock-check`);
+  }
+}
