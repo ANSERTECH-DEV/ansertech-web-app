@@ -17,7 +17,7 @@ export interface RfqResponse {
   clientPhone: string;
   urgency: string;
   extractionConfidence: number;
-  status: 'PENDING_REVIEW' | 'IN_PROGRESS' | 'REJECTED' | 'QUOTED';
+  status: 'PROCESSING' | 'PENDING_REVIEW' | 'QUOTING' | 'QUOTED' | 'REJECTED';
   notes: string;
   conversionProbability: number;
   items: RfqItemResponse[];
@@ -31,4 +31,29 @@ export interface Page<T> {
   totalPages: number;
   size: number;
   number: number;
+}
+
+export interface StockCheckItem {
+  rfqItemId: number;
+  rfqDescription: string;
+  quantityRequested: number;
+  unitRequested: string;
+  matched: boolean;
+  productId?: number;
+  productSku?: string;
+  productName?: string;
+  similarityScore?: number;
+  matchReason?: string;
+  stockQuantity?: number;
+  stockUnit?: string;
+  stockSufficient?: boolean;
+  unitPrice?: number;
+}
+
+export interface StockCheckResultResponse {
+  rfqId: number;
+  status: 'PROCESSING' | 'DONE' | 'FAILED';
+  items?: StockCheckItem[];
+  processedAt?: string;
+  errorMessage?: string;
 }

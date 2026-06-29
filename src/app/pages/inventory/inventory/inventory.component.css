@@ -71,6 +71,43 @@
   margin-left: -0.5715rem;
 }
 
+/* Low stock alert */
+.low-stock-alert {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Sidebar action buttons row */
+.sidebar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+::ng-deep .btn-new-product.p-button {
+  background: #1a2a4a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  width: 100%;
+  justify-content: center;
+}
+
+::ng-deep .btn-new-product.p-button:hover {
+  background: #243561;
+  border-color: transparent;
+}
+
 ::ng-deep .btn-bulk.p-button {
   background: #f0b84a;
   color: #7a4a00;
@@ -81,7 +118,6 @@
   font-weight: 700;
   font-size: 11px;
   width: 100%;
-  margin-top: 8px;
   justify-content: center;
 }
 
@@ -584,3 +620,71 @@
 
 .btn-finish:hover:not(:disabled) { background: #22c55e; }
 .btn-finish:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Create product modal ───────────────────────────────────── */
+.modal-create {
+  background: #fff;
+  border-radius: 12px;
+  width: 620px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+}
+
+.create-form {
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.create-row {
+  display: contents;
+}
+
+.create-form .field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.create-form label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.create-form .req { color: #dc2626; }
+
+.create-form input,
+.create-form select,
+.create-form textarea {
+  border: 1px solid #dde3ef;
+  border-radius: 6px;
+  padding: 7px 9px;
+  font-size: 12px;
+  font-family: inherit;
+  color: #1a2a4a;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.create-form input:focus,
+.create-form select:focus,
+.create-form textarea:focus {
+  border-color: #1a2a4a;
+}
+
+.create-form textarea { resize: vertical; }
+
+.create-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid #f0f2f8;
+  margin-top: 12px;
+}

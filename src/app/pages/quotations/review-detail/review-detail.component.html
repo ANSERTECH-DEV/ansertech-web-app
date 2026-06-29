@@ -1,72 +1,250 @@
-<div class="page" *ngIf="rfq">
+<div class="checking-page" *ngIf="rfq">
+  <!-- Topbar -->
   <div class="topbar">
-    <div class="back-btn" (click)="goBack()">
-      <span>← Volver</span>
+    <div class="topbar-left">
+      <button class="btn-back" (click)="goBack()">← Volver</button>
+      <div class="topbar-info">
+        <h1 class="topbar-title">RFQ #{{ rfq.id }} — {{ rfq.clientCompany || rfq.clientName || 'Cliente sin nombre' }}</h1>
+        <span class="topbar-sub">Creado: {{ rfq.createdAt | date:'dd MMM yyyy HH:mm' }} · Actualizado: {{ rfq.updatedAt | date:'dd MMM yyyy HH:mm' }}</span>
+      </div>
     </div>
-    <h1 class="page-title">Revisar RFQ #{{ rfq.id }}</h1>
-    <div class="actions" *ngIf="rfq.status === 'PENDING_REVIEW'">
-      <button class="btn btn-secondary">Descartar</button>
-      <button class="btn btn-primary" (click)="approve()" [disabled]="approving">
-        {{ approving ? 'Generando Cotización...' : 'Aprobar y Cotizar' }}
-      </button>
-    </div>
+    <span class="pill-checking">{{ quotation ? ('Cotizado — ' + quotation.quotationNumber) : getDisplayStatus(rfq.status) }}</span>
   </div>
 
-  <div class="content-grid">
-    <!-- Panel Izquierdo: Info de RFQ -->
-    <div class="left-panel">
-      <div class="card detail-card">
-        <h3>Datos del Cliente</h3>
-        <div class="detail-row">
-          <span class="lbl">Empresa:</span>
-          <span class="val">{{ rfq.clientCompany || rfq.clientName || 'No especificado' }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="lbl">Email:</span>
-          <span class="val">{{ rfq.clientEmail || 'No especificado' }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="lbl">Teléfono:</span>
-          <span class="val">{{ rfq.clientPhone || 'No especificado' }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="lbl">Urgencia:</span>
-          <span class="val" [ngClass]="{'high-urgency': rfq.urgency === 'HIGH'}">{{ rfq.urgency }}</span>
+  <!-- 2 columnas -->
+  <div class="checking-body">
+
+    <!-- Columna izquierda: Documento -->
+    <div class="col-left">
+      <div class="doc-scroll">
+        <div class="doc">
+          <div class="doc-header">
+            <div class="doc-brand">
+              <div class="doc-logo">AT</div>
+              <div>
+                <div class="doc-brand-name">ANSER TECH</div>
+                <div class="doc-brand-sub">PERÚ S.A.C.</div>
+              </div>
+            </div>
+            <div class="doc-contact">
+              <div>Jr. Los Laureles 245, Lima</div>
+              <div>Tel: (01) 234-5678</div>
+              <div>ventas@ansertech.pe</div>
+            </div>
+          </div>
+
+          <div class="doc-title-bar">
+            {{ quotation ? ('COTIZACIÓN ' + quotation.quotationNumber) : ('SOLICITUD DE COTIZACIÓN RFQ-' + rfq.id) }}
+          </div>
+
+          <div class="doc-body">
+            <div class="doc-info-grid">
+              <div class="doc-info-section">
+                <div class="doc-section-header">DATOS DEL CLIENTE</div>
+                <div class="doc-row"><span class="doc-label">Empresa</span><span>{{ rfq.clientCompany || 'No especificado' }}</span></div>
+                <div class="doc-row"><span class="doc-label">Contacto</span><span>{{ rfq.clientName || 'No especificado' }}</span></div>
+                <div class="doc-row"><span class="doc-label">Email</span><span>{{ rfq.clientEmail || 'No especificado' }}</span></div>
+                <div class="doc-row"><span class="doc-label">Teléfono</span><span>{{ rfq.clientPhone || 'No especificado' }}</span></div>
+              </div>
+              <div class="doc-info-section">
+                <div class="doc-section-header">DATOS DE {{ quotation ? 'LA COTIZACIÓN' : 'LA RFQ' }}</div>
+                <div class="doc-row" *ngIf="!quotation"><span class="doc-label">N° RFQ</span><span>RFQ-{{ rfq.id }}</span></div>
+                <div class="doc-row" *ngIf="quotation"><span class="doc-label">N° Cotiz.</span><span>{{ quotation!.quotationNumber }}</span></div>
+                <div class="doc-row"><span class="doc-label">Fecha</span><span>{{ (quotation ? quotation!.createdAt : rfq.createdAt) | date:'dd/MM/yyyy' }}</span></div>
+                <div class="doc-row" *ngIf="!quotation"><span class="doc-label">Urgencia</span><span [ngClass]="{'high-urgency': rfq.urgency === 'HIGH'}">{{ rfq.urgency || '-' }}</span></div>
+                <div class="doc-row" *ngIf="quotation"><span class="doc-label">Válida hasta</span><span>{{ quotation!.validUntil | date:'dd/MM/yyyy' }}</span></div>
+                <div class="doc-row"><span class="doc-label">Moneda</span><span>Soles (S/)</span></div>
+              </div>
+            </div>
+
+            <table class="doc-table" *ngIf="!quotation">
+              <thead>
+                <tr><th>#</th><th>Equipo / Producto</th><th>Cant.</th><th>Unidad</th><th>P.U.</th><th>Total</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of rfq.items; let i = index">
+                  <td>{{ i + 1 }}</td>
+                  <td>
+                    <strong>{{ item.productDescription }}</strong>
+                    <span *ngIf="item.productCode"> ({{ item.productCode }})</span>
+                  </td>
+                  <td style="text-align:center">{{ item.quantity }}</td>
+                  <td>{{ item.unit }}</td>
+                  <td>{{ getUnitPrice(item.id) != null ? ('S/ ' + (getUnitPrice(item.id) | number:'1.2-2')) : '—' }}</td>
+                  <td>{{ getUnitPrice(item.id) != null ? ('S/ ' + ((getUnitPrice(item.id)! * item.quantity) | number:'1.2-2')) : '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table class="doc-table" *ngIf="quotation">
+              <thead>
+                <tr><th>#</th><th>Equipo / Producto</th><th>Cant.</th><th>Unidad</th><th>P.U.</th><th>Total</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of quotation!.items; let i = index">
+                  <td>{{ i + 1 }}</td>
+                  <td><strong>{{ item.description }}</strong></td>
+                  <td style="text-align:center">{{ item.quantity }}</td>
+                  <td>{{ item.unit }}</td>
+                  <td>{{ item.unitPrice != null ? ('S/ ' + (item.unitPrice | number:'1.2-2')) : 'No encontrado' }}</td>
+                  <td>{{ item.subtotal != null ? ('S/ ' + (item.subtotal | number:'1.2-2')) : '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="doc-totals" *ngIf="!quotation">
+              <div class="total-row"><span>Sub Total</span><span>S/ {{ getEstimatedSubtotal() | number:'1.2-2' }}</span></div>
+              <div class="total-row"><span>IGV 18%</span><span>S/ {{ getEstimatedIgv() | number:'1.2-2' }}</span></div>
+              <div class="total-row total-bold"><span>TOTAL</span><span>S/ {{ getEstimatedTotal() | number:'1.2-2' }}</span></div>
+            </div>
+
+            <div class="doc-totals" *ngIf="quotation">
+              <div class="total-row"><span>Sub Total</span><span>S/ {{ quotation!.subtotal | number:'1.2-2' }}</span></div>
+              <div class="total-row"><span>IGV 18%</span><span>S/ {{ quotation!.igv | number:'1.2-2' }}</span></div>
+              <div class="total-row total-bold"><span>TOTAL</span><span>S/ {{ quotation!.total | number:'1.2-2' }}</span></div>
+            </div>
+
+            <div class="doc-conditions" *ngIf="quotation && quotation!.aiSummary">
+              <strong>Resumen IA:</strong> {{ quotation!.aiSummary }}
+            </div>
+            <div class="doc-conditions" *ngIf="!quotation && rfq.notes">
+              <strong>Notas:</strong> {{ rfq.notes }}
+            </div>
+            <div class="doc-conditions" *ngIf="!quotation && !rfq.notes">
+              Condiciones: Validez 15 días desde la generación de la cotización. IGV 18% incluido.
+            </div>
+
+            <div class="doc-firma">
+              <div class="firma-name">{{ quotation ? 'Cotización generada automáticamente' : 'Pendiente de generación' }}</div>
+              <div class="firma-dept">{{ quotation ? 'Generada por IA — revisar antes de enviar al cliente' : 'Los precios y totales se calculan al aprobar el RFQ' }} — Ansertech Perú S.A.C.</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="card note-card" *ngIf="rfq.notes">
-        <h3>Notas Adicionales</h3>
-        <p>{{ rfq.notes }}</p>
+      <div class="doc-actions processing-banner" *ngIf="!quotation && rfq.status === 'PROCESSING'">
+        <span class="processing-dot"></span>
+        Gemini está procesando el RFQ, por favor espera...
+      </div>
+
+      <div class="doc-actions" *ngIf="!quotation && rfq.status === 'PENDING_REVIEW'">
+        <button class="btn-approve" (click)="approve()" [disabled]="approving">
+          {{ approving ? 'Generando Cotización...' : '✓ Aprobar y Cotizar' }}
+        </button>
+        <button class="btn-review-req" (click)="reject()" [disabled]="rejecting">
+          {{ rejecting ? 'Rechazando...' : '✕ Rechazar' }}
+        </button>
+      </div>
+
+      <div class="doc-actions" *ngIf="quotation">
+        <button class="btn-approve" (click)="goBack()">← Volver a Cotizaciones</button>
       </div>
     </div>
 
-    <!-- Panel Derecho: Lista de Items Extraídos -->
-    <div class="right-panel">
-      <div class="card doc-card">
-        <h3>Productos Extraídos ({{ rfq.items.length }})</h3>
-        <table class="doc-table">
-          <thead>
-          <tr>
-            <th>Item</th>
-            <th>Descripción del Producto</th>
-            <th>Código</th>
-            <th>Cantidad</th>
-            <th>Unidad</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr *ngFor="let item of rfq.items; let i = index">
-            <td>{{ i + 1 }}</td>
-            <td class="col-desc"><strong>{{ item.productDescription }}</strong></td>
-            <td>{{ item.productCode || '-' }}</td>
-            <td>{{ item.quantity }}</td>
-            <td>{{ item.unit }}</td>
-          </tr>
-          </tbody>
-        </table>
+    <!-- Columna derecha: Análisis -->
+    <div class="col-right">
+      <div class="analysis-scroll">
+        <div class="analysis-card">
+          <div class="card-two-cols">
+            <div class="card-half">
+              <div class="card-section-title">🤖 Análisis de IA</div>
+              <div class="doc-row"><span class="doc-label">Confianza extr.</span><span>{{ formatPercent(rfq.extractionConfidence) }}</span></div>
+              <div class="doc-row"><span class="doc-label">Prob. conversión</span><span>{{ formatPercent(quotation ? quotation!.conversionProbability : rfq.conversionProbability) }}</span></div>
+              <div class="doc-row"><span class="doc-label">Tipo RFQ</span><span>{{ rfq.rfqType || '-' }}</span></div>
+            </div>
+            <div class="card-divider"></div>
+            <div class="card-half">
+              <div class="card-section-title">✉ Correo de origen</div>
+              <div class="email-badge">CORREO #{{ rfq.emailId }}</div>
+              <div class="email-row"><span class="email-lbl">Estado</span><span>{{ quotation ? quotation!.status : getDisplayStatus(rfq.status) }}</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analysis-card" *ngIf="!quotation">
+          <div class="card-section-title" style="margin-bottom:10px">
+            📦 Verificación de stock
+            <button class="btn-refresh-stock" (click)="refreshStockCheck()" [disabled]="loadingStock || isStockProcessing" title="Refrescar">↺</button>
+          </div>
+
+          <!-- PROCESSING: Gemini en cola / ejecutando -->
+          <div *ngIf="isStockProcessing" class="stock-processing">
+            <span class="processing-dot"></span>
+            Gemini procesando inventario...
+            <div class="stock-processing-hint">Se actualizará automáticamente</div>
+          </div>
+
+          <!-- FAILED: error en stock-check -->
+          <div *ngIf="isStockFailed" class="stock-failed">
+            <div>⚠ Error en el análisis de stock</div>
+            <div class="stock-failed-msg" *ngIf="stockResult?.errorMessage">{{ stockResult!.errorMessage }}</div>
+            <button class="btn-retry-stock" (click)="refreshStockCheck()">Reintentar</button>
+          </div>
+
+          <!-- DONE: tabla de resultados -->
+          <ng-container *ngIf="isStockDone">
+            <table class="stock-table" *ngIf="stockItems.length > 0">
+              <thead>
+                <tr><th>Descripción RFQ → Producto</th><th>Solicitado</th><th>Stock</th><th>IA</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let s of stockItems">
+                  <td>
+                    <div class="stock-product-name">{{ s.matched ? s.productName : s.rfqDescription }}</div>
+                    <div class="stock-rfq-desc" *ngIf="s.matched">{{ s.rfqDescription }}</div>
+                    <div class="stock-no-match" *ngIf="!s.matched">Sin coincidencia en inventario</div>
+                  </td>
+                  <td style="text-align:center">{{ s.quantityRequested }} {{ s.unitRequested }}</td>
+                  <td style="text-align:center">
+                    <span *ngIf="s.matched && s.stockSufficient"  class="stock-ok">✓ {{ s.stockQuantity }}</span>
+                    <span *ngIf="s.matched && !s.stockSufficient" class="stock-warn">⚠ {{ s.stockQuantity }}</span>
+                    <span *ngIf="!s.matched"                      class="stock-warn">—</span>
+                  </td>
+                  <td style="text-align:center">
+                    <span *ngIf="s.matched" class="similarity-badge" [class.high]="s.similarityScore! >= 0.8" [class.mid]="s.similarityScore! >= 0.5 && s.similarityScore! < 0.8">
+                      {{ (s.similarityScore! * 100) | number:'1.0-0' }}%
+                    </span>
+                    <span *ngIf="!s.matched" class="similarity-badge low">—</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div *ngIf="stockItems.length === 0" class="stock-loading">Sin ítems para verificar.</div>
+          </ng-container>
+
+          <div class="stock-legend" *ngIf="isStockDone && stockItems.length > 0">
+            <span><span class="legend-dot green"></span> Stock suficiente</span>
+            <span><span class="legend-dot red"></span> Stock insuficiente / no encontrado</span>
+          </div>
+        </div>
+
+        <div class="analysis-card" *ngIf="quotation">
+          <div class="card-section-title" style="margin-bottom:10px">📦 Verificación de stock (real)</div>
+          <table class="stock-table">
+            <thead>
+              <tr><th>Producto</th><th>Cant.</th><th>Disponibilidad</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of quotation!.items">
+                <td>{{ item.description }}</td>
+                <td style="text-align:center">{{ item.quantity }}</td>
+                <td style="text-align:center">
+                  <span *ngIf="item.availabilityStatus === 'IN_STOCK'" class="stock-ok">En stock</span>
+                  <span *ngIf="item.availabilityStatus === 'OUT_OF_STOCK'" class="stock-warn">⚠ Sin stock</span>
+                  <span *ngIf="item.availabilityStatus === 'ON_ORDER'" class="stock-warn">Por pedido</span>
+                  <span *ngIf="!item.availabilityStatus">-</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="stock-legend">
+            <span><span class="legend-dot green"></span> En stock</span>
+            <span><span class="legend-dot red"></span> Sin stock / por pedido</span>
+          </div>
+        </div>
       </div>
     </div>
+
   </div>
 </div>
 

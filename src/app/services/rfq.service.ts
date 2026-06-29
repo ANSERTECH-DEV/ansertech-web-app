@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiResponse } from '../core/models/api-response.model';
-import { RfqResponse, Page } from '../core/models/rfq.model';
+import { RfqResponse, Page, StockCheckResultResponse } from '../core/models/rfq.model';
 
 @Injectable({ providedIn: 'root' })
 export class RfqService {
@@ -17,13 +17,15 @@ export class RfqService {
       .set('size', size.toString());
       
     if (status && status !== 'Todas') {
-      let backendStatus = '';
-      if (status === 'Por aprobar') backendStatus = 'PENDING_REVIEW';
-      else if (status === 'En proceso') backendStatus = 'IN_PROGRESS';
-      
-      if (backendStatus) {
-         params = params.set('status', backendStatus);
-      }
+      const map: Record<string, string> = {
+        'Procesando':  'PROCESSING',
+        'Por aprobar': 'PENDING_REVIEW',
+        'Cotizando':   'QUOTING',
+        'Cotizado':    'QUOTED',
+        'Rechazado':   'REJECTED',
+      };
+      const backendStatus = map[status];
+      if (backendStatus) params = params.set('status', backendStatus);
     }
 
     return this.http.get<ApiResponse<Page<RfqResponse>>>(this.apiUrl, { params });
@@ -33,7 +35,15 @@ export class RfqService {
     return this.http.get<ApiResponse<RfqResponse>>(`${this.apiUrl}/${id}`);
   }
 
-  confirm(id: number): Observable<ApiResponse<string>> {
-    return this.http.post<ApiResponse<string>>(`${this.apiUrl}/${id}/confirm`, {});
+  confirm(id: number): Observable<ApiResponse<number>> {
+    return this.http.post<ApiResponse<number>>(`${this.apiUrl}/${id}/confirm`, {});
+  }
+
+  reject(id: number): Observable<ApiResponse<string>> {
+    return this.http.post<ApiResponse<string>>(`${this.apiUrl}/${id}/reject`, {});
+  }
+
+  stockCheck(id: number): Observable<ApiResponse<StockCheckResultResponse>> {
+    return this.http.get<ApiResponse<StockCheckResultResponse>>(`${this.apiUrl}/${id}/stock-check`);
   }
 }
