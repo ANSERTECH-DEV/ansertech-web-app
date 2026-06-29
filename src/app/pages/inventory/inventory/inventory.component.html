@@ -6,18 +6,26 @@
 
     <div class="filter-section">
       <div class="filter-label">Marca</div>
-      <label *ngFor="let b of brands" class="check-row">
-        <input type="checkbox" [checked]="selectedBrands.includes(b)" (change)="toggleBrand(b)">
-        <span>{{ b }}</span>
-      </label>
+      <div *ngFor="let b of brands" class="field-checkbox">
+        <p-checkbox
+          [(ngModel)]="selectedBrands"
+          [label]="b"
+          name="brand-group"
+          [value]="b"
+          (onChange)="applyFilters()" />
+      </div>
     </div>
 
     <div class="filter-section">
       <div class="filter-label">Categoría</div>
-      <label *ngFor="let c of cats" class="check-row">
-        <input type="checkbox" [checked]="selectedCats.includes(c)" (change)="toggleCat(c)">
-        <span>{{ c }}</span>
-      </label>
+      <div *ngFor="let c of cats" class="field-checkbox">
+        <p-checkbox
+          [(ngModel)]="selectedCats"
+          [label]="c"
+          name="cat-group"
+          [value]="c"
+          (onChange)="applyFilters()" />
+      </div>
     </div>
 
     <div class="filter-section">
@@ -26,45 +34,69 @@
         <span>S/ 0</span>
         <span>S/ {{ maxPrice }}</span>
       </div>
-      <input type="range" min="0" max="3000" step="100"
-             [(ngModel)]="maxPrice" (change)="onPriceChange()" class="price-slider">
+      <p-slider
+        [(ngModel)]="maxPrice"
+        [min]="0"
+        [max]="priceMax"
+        [step]="100"
+        (onChange)="onPriceChange()" />
     </div>
 
     <div class="filter-section">
       <div class="filter-label">Disponibilidad</div>
-      <label class="check-row">
-        <input type="checkbox" [(ngModel)]="onlyStock" (change)="onStockChange()">
-        <span>Solo en stock</span>
-      </label>
+      <div class="field-checkbox">
+        <p-checkbox
+          [(ngModel)]="onlyStock"
+          [binary]="true"
+          label="Solo en stock"
+          name="stock-group"
+          (onChange)="onStockChange()" />
+      </div>
     </div>
 
-    <button class="btn-bulk" (click)="openBulk()">Carga masiva</button>
+    <div class="low-stock-alert" *ngIf="lowStockCount > 0">
+      ⚠ {{ lowStockCount }} producto{{ lowStockCount > 1 ? 's' : '' }} con stock bajo
+    </div>
+
+    <div class="sidebar-actions">
+      <p-button label="+ Nuevo" styleClass="btn-new-product" (onClick)="openCreate()" />
+      <p-button label="Carga masiva" styleClass="btn-bulk" (onClick)="openBulk()" />
+    </div>
   </aside>
 
   <!-- Main area -->
   <div class="inv-main">
-    <input
-      type="text"
-      class="search-input"
-      placeholder="Buscar producto, código, marca..."
-      [(ngModel)]="searchText"
-      (ngModelChange)="onSearch()">
+    <p-floatLabel class="search-field">
+      <input
+        pInputText
+        id="search"
+        type="text"
+        [(ngModel)]="searchText"
+        (ngModelChange)="onSearch()" />
+      <label for="search">Buscar producto, código, marca...</label>
+    </p-floatLabel>
 
-    <div class="product-grid">
-      <div
+    <div *ngIf="loading" class="empty-grid">Cargando productos...</div>
+
+    <div class="product-grid" *ngIf="!loading">
+      <p-card
         *ngFor="let p of filteredProducts"
-        class="product-card"
+        [header]="p.name"
+        [subheader]="(p.brand || '-') + ' · ' + p.category"
+        styleClass="product-card"
         (click)="openDetail(p)">
-        <div class="card-img">{{ p.icon }}</div>
-        <div class="card-name">{{ p.name }}</div>
-        <div class="card-meta">{{ p.brand }} · {{ p.cat }}</div>
-        <div class="card-footer">
-          <span class="card-price">S/ {{ p.price }}</span>
-          <span class="stock-badge" [class.in-stock]="p.stock" [class.out-stock]="!p.stock">
-            {{ p.stock ? 'En stock (' + p.units + ')' : 'Agotado' }}
-          </span>
-        </div>
-      </div>
+        <ng-template pTemplate="header">
+          <div class="card-img">{{ getIcon(p.category) }}</div>
+        </ng-template>
+        <ng-template pTemplate="footer">
+          <div class="card-footer">
+            <span class="card-price">S/ {{ p.unitPrice }}</span>
+            <span class="stock-badge" [class.in-stock]="inStock(p)" [class.out-stock]="!inStock(p)">
+              {{ inStock(p) ? 'En stock (' + p.stockQuantity + ')' : 'Agotado' }}
+            </span>
+          </div>
+        </ng-template>
+      </p-card>
       <div *ngIf="filteredProducts.length === 0" class="empty-grid">
         Sin resultados para los filtros seleccionados.
       </div>
@@ -84,17 +116,17 @@
 
     <div class="modal-body">
       <div class="modal-img-col">
-        <span class="modal-icon">{{ selectedProduct?.icon }}</span>
+        <span class="modal-icon">{{ getIcon(selectedProduct?.category || '') }}</span>
       </div>
 
       <div class="modal-info-col">
         <div class="stock-indicator">
-          <span class="stock-dot" [class.dot-ok]="selectedProduct?.stock" [class.dot-out]="!selectedProduct?.stock"></span>
-          <span *ngIf="selectedProduct?.stock">{{ selectedProduct?.units }} unidades disponibles</span>
-          <span *ngIf="!selectedProduct?.stock">Sin existencias</span>
+          <span class="stock-dot" [class.dot-ok]="inStock(selectedProduct)" [class.dot-out]="!inStock(selectedProduct)"></span>
+          <span *ngIf="inStock(selectedProduct)">{{ selectedProduct?.stockQuantity }} unidades disponibles</span>
+          <span *ngIf="!inStock(selectedProduct)">Sin existencias</span>
         </div>
 
-        <div class="modal-price">S/ {{ editMode ? editForm.price : selectedProduct?.price }}</div>
+        <div class="modal-price">S/ {{ editMode ? editForm.unitPrice : selectedProduct?.unitPrice }}</div>
 
         <div class="modal-fields">
           <div class="field-group">
@@ -107,25 +139,27 @@
           </div>
           <div class="field-group">
             <label>Categoría</label>
-            <input [(ngModel)]="editForm.cat" [disabled]="!editMode">
+            <input [(ngModel)]="editForm.category" [disabled]="!editMode">
           </div>
           <div class="field-group">
             <label>Precio (S/)</label>
-            <input type="number" [(ngModel)]="editForm.price" [disabled]="!editMode">
+            <input type="number" [(ngModel)]="editForm.unitPrice" [disabled]="!editMode">
           </div>
           <div class="field-group">
             <label>Unidades en stock</label>
-            <input type="number" [(ngModel)]="editForm.units" [disabled]="!editMode">
+            <input type="number" [(ngModel)]="editForm.stockQuantity" [disabled]="!editMode">
           </div>
           <div class="field-group">
             <label>Estado</label>
-            <input [value]="selectedProduct?.stock ? 'En stock' : 'Agotado'" disabled>
+            <input [value]="inStock(selectedProduct) ? 'En stock' : 'Agotado'" disabled>
           </div>
         </div>
 
-        <div class="modal-desc">{{ selectedProduct?.desc }}</div>
+        <div class="modal-desc">{{ selectedProduct?.description }}</div>
 
-        <button *ngIf="editMode" class="btn-save" (click)="saveEdit()">✓ Guardar</button>
+        <button *ngIf="editMode" class="btn-save" [disabled]="saving" (click)="saveEdit()">
+          {{ saving ? 'Guardando...' : '✓ Guardar' }}
+        </button>
         <button class="btn-edit" [class.editing]="editMode" (click)="toggleEdit()">✏</button>
       </div>
     </div>
@@ -239,5 +273,95 @@
         <button class="btn-finish" [disabled]="!bulkFile" (click)="finalizeBulk()">Finalizar</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Modal: Nuevo Producto -->
+<div class="modal-overlay" *ngIf="showCreate" (click)="closeCreate()">
+  <div class="modal-create" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h3>Nuevo Producto</h3>
+      <button class="modal-close" (click)="closeCreate()">✕</button>
+    </div>
+
+    <div class="create-form">
+      <div class="create-row">
+        <div class="field-group">
+          <label>SKU <span class="req">*</span></label>
+          <input [(ngModel)]="createForm.sku" placeholder="Ej: CAM-IP-002">
+        </div>
+        <div class="field-group">
+          <label>Nombre <span class="req">*</span></label>
+          <input [(ngModel)]="createForm.name" placeholder="Nombre del producto">
+        </div>
+      </div>
+
+      <div class="create-row">
+        <div class="field-group">
+          <label>Categoría</label>
+          <select [(ngModel)]="createForm.category">
+            <option value="">-- Seleccionar --</option>
+            <option *ngFor="let c of createCategories" [value]="c">{{ c }}</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Marca</label>
+          <input [(ngModel)]="createForm.brand" placeholder="Ej: Hikvision">
+        </div>
+      </div>
+
+      <div class="create-row">
+        <div class="field-group">
+          <label>Precio unitario (S/) <span class="req">*</span></label>
+          <input type="number" [(ngModel)]="createForm.unitPrice" placeholder="0.00" min="0">
+        </div>
+        <div class="field-group">
+          <label>Moneda</label>
+          <select [(ngModel)]="createForm.currency">
+            <option value="PEN">PEN — Soles</option>
+            <option value="USD">USD — Dólares</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="create-row">
+        <div class="field-group">
+          <label>Stock inicial <span class="req">*</span></label>
+          <input type="number" [(ngModel)]="createForm.stockQuantity" placeholder="0" min="0">
+        </div>
+        <div class="field-group">
+          <label>Stock mínimo (alerta)</label>
+          <input type="number" [(ngModel)]="createForm.minStockThreshold" placeholder="5" min="0">
+        </div>
+      </div>
+
+      <div class="create-row">
+        <div class="field-group">
+          <label>Unidad</label>
+          <input [(ngModel)]="createForm.unit" placeholder="Ej: unidad, m, par">
+        </div>
+        <div class="field-group">
+          <label>Proveedor</label>
+          <input [(ngModel)]="createForm.supplierName" placeholder="Nombre del proveedor">
+        </div>
+      </div>
+
+      <div class="field-group" style="grid-column: 1/-1">
+        <label>Descripción</label>
+        <textarea [(ngModel)]="createForm.description" rows="3"
+                  placeholder="Descripción técnica del producto..."></textarea>
+      </div>
+    </div>
+
+    <div class="create-footer">
+      <button class="btn-cancel-bulk" (click)="closeCreate()">Cancelar</button>
+      <button class="btn-finish"
+              [disabled]="creating || !createForm.sku || !createForm.name"
+              (click)="submitCreate()">
+        {{ creating ? 'Guardando...' : 'Guardar producto' }}
+      </button>
+    </div>
+
   </div>
 </div>

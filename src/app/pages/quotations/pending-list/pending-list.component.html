@@ -2,6 +2,9 @@
   <!--Topbar-->
   <div class="topbar">
     <h1 class="page-title">Cotizaciones</h1>
+    <button class="btn-refresh" (click)="refresh()" [disabled]="refreshing" title="Actualizar estados">
+      {{ refreshing ? '⟳' : '↻' }} Actualizar
+    </button>
     <div class="tabs">
       <p-selectButton
         [allowEmpty]="false"
@@ -25,28 +28,28 @@
       <div class="stat-icon" style="background:#fef3c7">⏱</div>
       <div class="stat-info">
         <span class="stat-label">EN COLA</span>
-        <span class="stat-value" style="color:#d97706">{{ count('En cola') }}</span>
+        <span class="stat-value" style="color:#d97706">{{ activeTab === 'En cola' || activeTab === 'Todas' ? (activeTab === 'En cola' ? totalItems : '-') : '-' }}</span>
       </div>
     </div>
     <div class="stat-card">
       <div class="stat-icon" style="background:#dbeafe">⏳</div>
       <div class="stat-info">
         <span class="stat-label">EN PROCESO</span>
-        <span class="stat-value" style="color:#1e5fc4">{{ count('En proceso') }}</span>
+        <span class="stat-value" style="color:#1e5fc4">{{ activeTab === 'En proceso' ? totalItems : '-' }}</span>
       </div>
     </div>
     <div class="stat-card">
       <div class="stat-icon" style="background:#d1fae5">✓</div>
       <div class="stat-info">
         <span class="stat-label">POR APROBAR</span>
-        <span class="stat-value" style="color:#059669">{{ count('Por aprobar') }}</span>
+        <span class="stat-value" style="color:#059669">{{ activeTab === 'Por aprobar' ? totalItems : '-' }}</span>
       </div>
     </div>
     <div class="stat-card">
       <div class="stat-icon" style="background:#ede9fe">📄</div>
       <div class="stat-info">
         <span class="stat-label">TOTAL MES</span>
-        <span class="stat-value" style="color:#7c3aed">9</span>
+        <span class="stat-value" style="color:#7c3aed">{{ activeTab === 'Todas' ? totalItems : '-' }}</span>
       </div>
     </div>
   </div>
@@ -63,19 +66,19 @@
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-item>
-      <tr [class.row-checking]="item.status === 'Por aprobar'" (click)="item.status === 'Por aprobar'?goToChecking(item):$any('')">
+      <tr [class.row-checking]="isClickable(item)" (click)="goToChecking(item)">
         <td class="col-solicitud">
-          <span class="row-name">{{ item.name }}</span>
-          <span class="row-id">{{ item.id }}</span>
+          <span class="row-name">RFQ #{{ item.id }}</span>
+          <span class="row-id">{{ item.clientEmail || 'Sin correo' }}</span>
         </td>
-        <td class="col-cliente">{{ item.client }}</td>
-        <td class="col-fecha">{{ item.date }}</td>
-        <td class="col-monto">{{ item.amount }}</td>
+        <td class="col-cliente">{{ item.clientCompany || item.clientName || 'Desconocido' }}</td>
+        <td class="col-fecha">{{ item.createdAt | date:'dd MMM HH:mm' }}</td>
+        <td class="col-monto">{{ item.items ? item.items.length : 0 }} items</td>
         <td>
           <div class="col-estado">
-            <span class="status-pill" [ngClass]="'pill-' + item.status.replace(' ', '-').toLowerCase()">
+            <span class="status-pill" [ngClass]="'pill-' + getDisplayStatus(item.status).replace(' ', '-').toLowerCase()">
               <span class="pill-dot"></span>
-              {{ item.status }}
+              {{ getDisplayStatus(item.status) }}
             </span>
           </div>
         </td>
