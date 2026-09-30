@@ -29,3 +29,28 @@ export interface ProductRequest {
   supplierName?: string;
   brand?: string;
 }
+
+export type ImportAction = 'CREATE' | 'UPDATE' | 'UNCHANGED' | 'ERROR';
+
+export interface ImportRow {
+  rowNumber: number;
+  sku: string;
+  name: string;
+  brand: string;
+  action: ImportAction;
+  oldStock?: number;
+  newStock?: number;
+  oldPrice?: number;
+  newPrice?: number;
+  message?: string;
+}
+
+export interface ImportResult {
+  dryRun: boolean;
+  totalRows: number;
+  created: number;
+  updated: number;
+  unchanged: number;
+  errors: number;
+  rows: ImportRow[];
+}

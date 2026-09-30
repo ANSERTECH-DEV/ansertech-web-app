@@ -28,6 +28,15 @@ describe('InventoryService', () => {
     expect(req.request.params.get('size')).toBe('100');
     expect(req.request.params.has('search')).toBeFalse();
     expect(req.request.params.has('category')).toBeFalse();
+    expect(req.request.params.has('sort')).toBeFalse();
+    req.flush({ success: true, data: {} });
+  });
+
+  it('getAll() envía sort solo cuando se pasa', () => {
+    service.getAll(0, 1000, undefined, undefined, 'name,asc').subscribe();
+    const req = httpMock.expectOne(r => r.url === apiUrl);
+    expect(req.request.params.get('size')).toBe('1000');
+    expect(req.request.params.get('sort')).toBe('name,asc');
     req.flush({ success: true, data: {} });
   });
 
@@ -77,5 +86,30 @@ describe('InventoryService', () => {
     const req = httpMock.expectOne(`${apiUrl}/low-stock`);
     expect(req.request.method).toBe('GET');
     req.flush({ success: true, data: [] });
+  });
+
+  it('downloadTemplate() hace GET a /inventory/import/template como blob', () => {
+    service.downloadTemplate().subscribe();
+    const req = httpMock.expectOne(`${apiUrl}/import/template`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(new Blob(['xlsx']));
+  });
+
+  it('importExcel() hace POST multipart a /inventory/import con el archivo y dryRun', () => {
+    const file = new File(['xlsx'], 'inventario.xlsx');
+
+    service.importExcel(file, true).subscribe();
+    const preview = httpMock.expectOne(r => r.url === `${apiUrl}/import`);
+    expect(preview.request.method).toBe('POST');
+    expect(preview.request.params.get('dryRun')).toBe('true');
+    expect(preview.request.body instanceof FormData).toBeTrue();
+    expect((preview.request.body as FormData).get('file')).toEqual(file);
+    preview.flush({ success: true, data: {} });
+
+    service.importExcel(file, false).subscribe();
+    const commit = httpMock.expectOne(r => r.url === `${apiUrl}/import`);
+    expect(commit.request.params.get('dryRun')).toBe('false');
+    commit.flush({ success: true, data: {} });
   });
 });

@@ -14,6 +14,11 @@
   --success:    #0d9e6e;
   --warning:    #d97706;
   --danger:     #dc2626;
+
+  /* Alto fijo de la barra de navegación + padding vertical de .main-content (20 + 20).
+     Las vistas de alto completo (p. ej. revisión de RFQ) restan esto de 100vh. */
+  --navbar-h:        80px;
+  --layout-offset:   calc(var(--navbar-h) + 40px);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

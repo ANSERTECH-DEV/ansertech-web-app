@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CheckboxModule } from 'primeng/checkbox';
 import { SliderModule } from 'primeng/slider';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { InputTextModule } from 'primeng/inputtext';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { ButtonModule } from 'primeng/button';
@@ -17,6 +18,7 @@ import { InventoryComponent } from './inventory/inventory.component';
     FormsModule,
     CheckboxModule,
     SliderModule,
+    MultiSelectModule,
     InputTextModule,
     FloatLabelModule,
     ButtonModule,
