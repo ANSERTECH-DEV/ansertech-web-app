@@ -1,15 +1,32 @@
 import { Component, OnInit } from '@angular/core';
 import { InventoryService } from '../../../services/inventory.service';
-import { ProductResponse, ProductRequest } from '../../../core/models/product.model';
+import { ProductResponse, ProductRequest, ImportResult, ImportRow, ImportAction } from '../../../core/models/product.model';
 
-interface BulkProductRow { name: string; brand: string; qty: number; }
-interface BulkPriceRow  { name: string; brand: string; old: number; nuevo: number; }
+// La vista filtra en el navegador, así que necesita el catálogo completo (hoy ~543 productos).
+// Si el catálogo supera este tope habrá que pasar a paginación/búsqueda en el backend.
+const MAX_PRODUCTS = 1000;
 
 const DEFAULT_CATEGORIES = [
   'pH / ORP', 'Colorímetro', 'Multiparámetro', 'Conductividad',
   'Videovigilancia', 'Sensores', 'Automatización', 'Materiales eléctricos',
   'Servicios', 'EPP',
 ];
+
+// Opción de filtro para productos con marca/categoría vacía
+const NO_BRAND = '(Sin marca)';
+const NO_CATEGORY = '(Sin categoría)';
+
+/** Valor de filtro: el texto limpio, o la etiqueta "sin valor" si está vacío. */
+function filterKey(value: string | null | undefined, empty: string): string {
+  return value?.trim() || empty;
+}
+
+/** Valores distintos ordenados, con la opción "sin valor" al inicio si existe. */
+function filterOptions(values: string[], empty: string): string[] {
+  const named = Array.from(new Set(values.filter(v => v !== empty)))
+    .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+  return values.includes(empty) ? [empty, ...named] : named;
+}
 
 @Component({
   selector: 'app-inventory',
@@ -39,6 +56,7 @@ export class InventoryComponent implements OnInit {
   showDetail = false;
   selectedProduct?: ProductResponse;
   editMode = false;
+  descExpanded = false;
   editForm: Partial<ProductResponse> = {};
   saving = false;
 
@@ -48,25 +66,16 @@ export class InventoryComponent implements OnInit {
   createForm: Partial<ProductRequest> = {};
   createCategories: string[] = DEFAULT_CATEGORIES;
 
-  /* Bulk upload modal */
+  /* Bulk upload modal (POST /api/inventory/import: primero dryRun=true, luego dryRun=false) */
   showBulk = false;
   bulkTab: 'Productos' | 'Precios' = 'Productos';
   bulkFile: File | null = null;
   dragOver = false;
-
-  bulkProductsMock: BulkProductRow[] = [
-    { name: 'Medidor combo pH/Con/TDS HI98130', brand: 'HANNA · Multiparámetro', qty: 20 },
-    { name: 'Balanza de precisión 220gr',       brand: 'XYSCALE · XY200-2C',    qty: 15 },
-    { name: 'Sensor temperatura tipo K',        brand: 'OMEGA · KTSS-HH',       qty: 8  },
-    { name: 'Termómetro infrarojo industrial',  brand: 'EXTECH · IR267',         qty: 12 },
-  ];
-
-  bulkPricesMock: BulkPriceRow[] = [
-    { name: 'Medidor combo pH/Con/TDS HI98130', brand: 'HANNA · Multiparámetro', old: 890,  nuevo: 950  },
-    { name: 'Colorímetro Checker HC cloro',      brand: 'HANNA · Colorímetro',   old: 245,  nuevo: 230  },
-    { name: 'ProQuatro multiparámetro',          brand: 'YSI · Multiparámetro',  old: 2800, nuevo: 2800 },
-    { name: 'SevenCompact S210',                 brand: 'Mettler · pH / ORP',    old: 1450, nuevo: 1550 },
-  ];
+  bulkPreview: ImportResult | null = null;
+  bulkLoading = false;
+  bulkSaving = false;
+  bulkError = '';
+  downloadingTemplate = false;
 
   constructor(private inventoryService: InventoryService) {}
 
@@ -79,7 +88,7 @@ export class InventoryComponent implements OnInit {
 
   loadProducts(): void {
     this.loading = true;
-    this.inventoryService.getAll().subscribe({
+    this.inventoryService.getAll(0, MAX_PRODUCTS, undefined, undefined, 'name,asc').subscribe({
       next: (res) => {
         if (res.success) {
           this.allProducts = res.data.content;
@@ -104,22 +113,23 @@ export class InventoryComponent implements OnInit {
 
   // ── Filters ───────────────────────────────────────────────────────────────
 
+  /** Recalcula las opciones de filtro; al recargar (guardar, crear, carga masiva) conserva lo elegido. */
   private initFilters(): void {
-    const brandSet = new Set(this.allProducts.map(p => p.brand).filter(b => !!b));
-    this.brands = Array.from(brandSet).sort();
-    this.selectedBrands = [...this.brands];
+    const priceFiltered = this.maxPrice < this.priceMax;
 
-    const catSet = new Set(this.allProducts.map(p => p.category).filter(c => !!c));
-    this.cats = Array.from(catSet).sort();
-    this.selectedCats = [...this.cats];
+    this.brands = filterOptions(this.allProducts.map(p => filterKey(p.brand, NO_BRAND)), NO_BRAND);
+    this.selectedBrands = this.selectedBrands.filter(b => this.brands.includes(b));  // vacío = todas
 
-    const prices = this.allProducts.map(p => Number(p.unitPrice));
+    this.cats = filterOptions(this.allProducts.map(p => filterKey(p.category, NO_CATEGORY)), NO_CATEGORY);
+    this.selectedCats = this.selectedCats.filter(c => this.cats.includes(c));  // vacío = todas
+
+    const prices = this.allProducts.map(p => Number(p.unitPrice)).filter(n => Number.isFinite(n));
     const maxP = prices.length ? Math.max(...prices) : 6000;
-    this.priceMax = Math.ceil(maxP / 1000) * 1000;
-    this.maxPrice = this.priceMax;
+    this.priceMax = Math.max(Math.ceil(maxP / 1000) * 1000, 1000);
+    this.maxPrice = priceFiltered ? Math.min(this.maxPrice, this.priceMax) : this.priceMax;
 
     // Merge categories from DB into the create-form list
-    const allCats = new Set([...DEFAULT_CATEGORIES, ...this.cats]);
+    const allCats = new Set([...DEFAULT_CATEGORIES, ...this.cats.filter(c => c !== NO_CATEGORY)]);
     this.createCategories = Array.from(allCats).sort();
   }
 
@@ -130,12 +140,25 @@ export class InventoryComponent implements OnInit {
           !p.name.toLowerCase().includes(search) &&
           !(p.sku || '').toLowerCase().includes(search) &&
           !(p.brand || '').toLowerCase().includes(search)) return false;
-      if (this.selectedBrands.length && p.brand && !this.selectedBrands.includes(p.brand)) return false;
-      if (this.selectedCats.length && p.category && !this.selectedCats.includes(p.category)) return false;
+      if (this.selectedBrands.length && !this.selectedBrands.includes(filterKey(p.brand, NO_BRAND))) return false;
+      if (this.selectedCats.length && !this.selectedCats.includes(filterKey(p.category, NO_CATEGORY))) return false;
       if (Number(p.unitPrice) > this.maxPrice) return false;
       if (this.onlyStock && !(Number(p.stockQuantity) > 0)) return false;
       return true;
     });
+  }
+
+  hasActiveFilters(): boolean {
+    return this.selectedBrands.length > 0 || this.selectedCats.length > 0
+      || this.maxPrice < this.priceMax || this.onlyStock;
+  }
+
+  clearFilters(): void {
+    this.selectedBrands = [];
+    this.selectedCats = [];
+    this.maxPrice = this.priceMax;
+    this.onlyStock = false;
+    this.applyFilters();
   }
 
   onPriceChange(): void { this.applyFilters(); }
@@ -168,9 +191,17 @@ export class InventoryComponent implements OnInit {
 
   openDetail(p: ProductResponse): void {
     this.selectedProduct = { ...p };
-    this.editForm = { ...p };
+    // Precios en soles enteros (V10): el campo de edición no arrastra decimales antiguos
+    this.editForm = { ...p, unitPrice: p.unitPrice != null ? Math.round(Number(p.unitPrice)) : p.unitPrice };
     this.editMode = false;
+    this.descExpanded = false;
     this.showDetail = true;
+  }
+
+  /** El cuadro muestra ~4 líneas: más texto o más saltos de línea que eso se recorta y muestra "Ver más". */
+  isLongDescription(): boolean {
+    const desc = this.selectedProduct?.description?.trim() ?? '';
+    return desc.length > 220 || desc.split('\n').length > 4;
   }
 
   closeDetail(): void { this.showDetail = false; this.editMode = false; }
@@ -264,40 +295,126 @@ export class InventoryComponent implements OnInit {
 
   // ── Bulk upload modal ─────────────────────────────────────────────────────
 
-  openBulk(): void { this.showBulk = true; this.bulkFile = null; this.bulkTab = 'Productos'; }
-  closeBulk(): void { this.showBulk = false; this.bulkFile = null; }
+  openBulk(): void {
+    this.resetBulk();
+    this.bulkTab = 'Productos';
+    this.showBulk = true;
+  }
+
+  closeBulk(): void {
+    if (this.bulkSaving) return;
+    this.showBulk = false;
+    this.resetBulk();
+  }
 
   onFileSelect(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files?.length) this.bulkFile = input.files[0];
+    if (input.files?.length) this.setBulkFile(input.files[0]);
+    input.value = '';   // permite volver a elegir el mismo archivo
   }
 
   onDrop(event: DragEvent): void {
     event.preventDefault();
     this.dragOver = false;
-    if (event.dataTransfer?.files.length) this.bulkFile = event.dataTransfer.files[0];
+    if (event.dataTransfer?.files.length) this.setBulkFile(event.dataTransfer.files[0]);
   }
 
   onDragOver(event: DragEvent): void { event.preventDefault(); this.dragOver = true; }
   onDragLeave(): void { this.dragOver = false; }
-  removeFile(): void { this.bulkFile = null; }
+  removeFile(): void { this.resetBulk(); }
+
+  /** Vista previa real: el backend analiza el archivo sin guardar nada. */
+  private setBulkFile(file: File): void {
+    this.resetBulk();
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+      this.bulkError = 'Formato no soportado: sube un archivo Excel .xlsx';
+      return;
+    }
+    this.bulkFile = file;
+    this.bulkLoading = true;
+    this.inventoryService.importExcel(file, true).subscribe({
+      next: (res) => {
+        this.bulkLoading = false;
+        this.bulkPreview = res.data;
+      },
+      error: (err) => {
+        this.bulkLoading = false;
+        this.bulkError = this.apiError(err, 'No se pudo analizar el archivo.');
+      }
+    });
+  }
+
+  downloadTemplate(): void {
+    this.downloadingTemplate = true;
+    this.inventoryService.downloadTemplate().subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'plantilla-inventario.xlsx';
+        a.click();
+        URL.revokeObjectURL(url);
+        this.downloadingTemplate = false;
+      },
+      error: () => {
+        this.downloadingTemplate = false;
+        this.bulkError = 'No se pudo descargar la plantilla. Intente nuevamente.';
+      }
+    });
+  }
+
+  canFinalizeBulk(): boolean {
+    return !!this.bulkPreview && !this.bulkLoading && !this.bulkSaving
+      && (this.bulkPreview.created + this.bulkPreview.updated) > 0;
+  }
 
   finalizeBulk(): void {
-    this.closeBulk();
-    alert('Carga masiva finalizada correctamente.');
+    if (!this.canFinalizeBulk() || !this.bulkFile) return;
+    this.bulkSaving = true;
+    this.bulkError = '';
+    this.inventoryService.importExcel(this.bulkFile, false).subscribe({
+      next: (res) => {
+        this.bulkSaving = false;
+        this.closeBulk();
+        this.loadProducts();
+        this.loadLowStockCount();
+        alert(res.message);
+      },
+      error: (err) => {
+        this.bulkSaving = false;
+        this.bulkError = this.apiError(err, 'No se pudo completar la carga. No se guardó ningún cambio.');
+      }
+    });
   }
 
-  bulkDifferentCount(): number {
-    return this.bulkPricesMock.filter(r => r.old !== r.nuevo).length;
+  /** Filas cuyo precio cambia (nuevas o actualizadas), para la pestaña "Precios". */
+  bulkPriceRows(): ImportRow[] {
+    return (this.bulkPreview?.rows ?? []).filter(r =>
+      (r.action === 'CREATE' || r.action === 'UPDATE') && Number(r.oldPrice) !== Number(r.newPrice));
   }
 
-  priceDiff(row: BulkPriceRow): 'up' | 'down' | 'same' {
-    if (row.nuevo > row.old) return 'up';
-    if (row.nuevo < row.old) return 'down';
+  priceDiff(row: ImportRow): 'up' | 'down' | 'same' | 'added' {
+    if (row.oldPrice == null) return 'added';
+    if (Number(row.newPrice) > Number(row.oldPrice)) return 'up';
+    if (Number(row.newPrice) < Number(row.oldPrice)) return 'down';
     return 'same';
   }
 
-  totalUnits(): number {
-    return this.bulkProductsMock.reduce((sum, r) => sum + r.qty, 0);
+  actionLabel(action: ImportAction): string {
+    const labels: Record<ImportAction, string> = {
+      CREATE: 'Nuevo', UPDATE: 'Actualiza', UNCHANGED: 'Sin cambios', ERROR: 'Error',
+    };
+    return labels[action];
+  }
+
+  private resetBulk(): void {
+    this.bulkFile = null;
+    this.bulkPreview = null;
+    this.bulkLoading = false;
+    this.bulkError = '';
+  }
+
+  private apiError(err: any, fallback: string): string {
+    return err?.error?.message || fallback;
   }
 }

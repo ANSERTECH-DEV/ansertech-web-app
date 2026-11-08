@@ -1,40 +1,69 @@
-# Ansertech Perú S.A.C. - B2B Quotation Optimization System
+# Ansertech Web App (frontend)
 
-![Angular](https://img.shields.io/badge/Angular-16-DD0031?style=flat&logo=angular)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?style=flat&logo=spring)
-![Google Cloud](https://img.shields.io/badge/GCP-Vertex_AI-4285F4?style=flat&logo=googlecloud)
+Frontend del sistema de cotización automatizada de Ansertech Perú S.A.C.: los operadores revisan las solicitudes de cotización (RFQ) que la IA (Gemini) extrajo de los correos, las aprueban o rechazan, y administran el inventario.
 
-## B2B Web Application
+- **Stack:** Angular 16.2 · TypeScript 5.1 · PrimeNG 17 · RxJS 7.8 · CSS plano · hash routing (`#/`)
+- **Backend:** [`ansertech-backend`](../ansertech-backend) (Spring Boot, puerto 8080)
 
-This project is a business-to-business (B2B) web application developed for internal and external enterprise operations at Ansertech Perú S.A.C. Its primary goal is to optimize the quotation process for goods and services within the highly demanding mining sector.
+## Requisitos
 
-## Authors
-- **Jorge Gerardo Quilla Luyo** - u20211b197@upc.edu.pe
-- **Rony Piero Ticona Luque** - u201420422@upc.edu.pe
+- Node.js compatible con Angular 16 (18.x recomendado) y npm
+- Backend corriendo en `http://localhost:8080`
 
-## Description
-This application is designed to support business processes between companies, providing a scalable and maintainable web platform. By integrating advanced Artificial Intelligence models, the system reduces manual errors and significantly improves response times for B2B clients.
+## Levantar en local
 
-### Key Features
-- **Automated RFQ Processing:** Extracts unstructured data from PDF requests (quotes, technical specifications) using Google Document AI.
-- **Smart Spam Filtering:** Automatically classifies and filters incoming emails to prioritize valid business requests.
-- **Intelligent Inventory Search:** Utilizes Text Embeddings and Vector Search to match requested items with the current stock contextually, not just by exact string matching.
-- **Quotation Generation:** Generates structured, ready-to-review commercial proposals, minimizing human transcription.
+```bash
+npm install
+npm start            # ng serve → http://localhost:4200
+```
 
-## Technology Stack
+La URL de la API se define en `src/environments/environment.ts` (`apiUrl: http://localhost:8080/api`).
 
-### Frontend
-- Angular 16
-- TypeScript
-- HTML5 / CSS3
+> ⚠️ No existe `environment.prod.ts` ni `fileReplacements` en `angular.json`: un `ng build` de producción también apunta a `localhost:8080`. Hay que crearlo antes de desplegar.
 
-### Backend & AI (Architecture)
-- **Framework:** Java / Spring Boot
-- **Database:** PostgreSQL
-- **AI Platform:** Google Vertex AI
-- **Deployment:** Google Cloud Platform
+Usuarios: en la BD de Azure actual solo existen las cuentas ADMIN de los autores. `admin@ansertech.pe` y `operador@ansertech.pe` (de V6) se perdieron al recrear la base el 2026-09-27.
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) (v18.x or higher)
-- [Angular CLI](https://angular.io/cli) (v16.x)
-- Java 17+ (for backend services)
+## Pantallas
+
+| Ruta | Componente | Qué hace |
+|---|---|---|
+| `#/login` | `AuthComponent` | Login con JWT (se guarda en `localStorage`) |
+| `#/cotizaciones` | `PendingListComponent` | Lista de RFQs con tabs por estado |
+| `#/cotizaciones/:id/checking` | `ReviewDetailComponent` | Revisión del RFQ: polling cada 3 s mientras la IA procesa, tabla de stock, aprobar/rechazar |
+| `#/inventario` | `InventoryComponent` | CRUD de productos, badge de stock bajo, carga masiva desde Excel con vista previa. Filtros de marca/categoría con buscador (incluyen "Sin marca"/"Sin categoría"), tarjetas de alto uniforme y precios en soles enteros |
+| `#/dashboard` | `DashboardComponent` | Exportar Excel de correos e inventario (los KPIs todavía son mock) |
+
+El detalle botón por botón está en [`../front.md`](../front.md).
+
+La barra de navegación queda fija al hacer scroll. `AppModule` importa `BrowserAnimationsModule`, que lo necesitan los paneles desplegables de PrimeNG (`p-multiSelect`): sin él, el desplegable no abre.
+
+## Estructura
+
+```
+src/app/
+├── components/   UI compartida (menú, footer)
+├── core/         interceptors (JWT) y modelos TypeScript
+├── guards/       AuthGuard
+├── layouts/      blank (login) y main (con menú)
+├── pages/        un módulo por feature (authentication, dashboard, inventory, quotations)
+├── services/     un servicio HTTP por recurso de la API
+└── shared/       DTOs compartidos
+```
+
+## Tests
+
+```bash
+npx ng test --watch=false --code-coverage --browsers=ChromeHeadless
+open coverage/ansertech-web-app/index.html
+```
+
+52 specs Karma + Jasmine (servicios, interceptor JWT, `ReviewDetailComponent`, `AppComponent` y filtros de `InventoryComponent`). Resultados y cobertura: [`../docs/informe_testing.md`](../docs/informe_testing.md).
+
+## Limitaciones conocidas
+
+- `quotation.service.ts` solo expone `getById`: el reenvío (`POST /quotations/{id}/send`) y la descarga de PDF (`GET /quotations/{id}/pdf`) existen en el backend pero no en la UI.
+- El dashboard no consume `/api/dashboard/stats`.
+- `AuthService.login()` no guarda el token (lo hace `AuthComponent`); `JwtInterceptor` no maneja 401.
+- `services/cotizaciones.service.ts` y `services/productos.service.ts` son código muerto de un prototipo anterior.
+
+Lista completa y priorizada: [`../proyecto_tesis_resumen.md`](../proyecto_tesis_resumen.md) §5.

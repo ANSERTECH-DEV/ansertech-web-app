@@ -6,27 +6,65 @@
 
     <div class="filter-section">
       <div class="filter-label">Marca</div>
-      <div *ngFor="let b of brands" class="field-checkbox">
-        <p-checkbox
-          [(ngModel)]="selectedBrands"
-          [label]="b"
-          name="brand-group"
-          [value]="b"
-          (onChange)="applyFilters()" />
-      </div>
+      <p-multiSelect
+        #brandMs
+        [options]="brands"
+        [(ngModel)]="selectedBrands"
+        name="brand-group"
+        placeholder="Todas las marcas"
+        [filter]="true"
+        filterPlaceHolder="Buscar marca..."
+        [showToggleAll]="false"
+        [showClear]="true"
+        [maxSelectedLabels]="1"
+        selectedItemsLabel="{0} marcas"
+        emptyFilterMessage="Sin coincidencias"
+        appendTo="body"
+        [panelStyle]="{ minWidth: '260px' }"
+        styleClass="filter-multiselect"
+        panelStyleClass="filter-ms-panel"
+        (onChange)="applyFilters()"
+        (onClear)="applyFilters()">
+        <ng-template pTemplate="footer">
+          <div class="filter-ms-footer">
+            <button type="button" class="filter-ms-done" (click)="brandMs.hide()">Listo</button>
+          </div>
+        </ng-template>
+      </p-multiSelect>
     </div>
 
     <div class="filter-section">
       <div class="filter-label">Categoría</div>
-      <div *ngFor="let c of cats" class="field-checkbox">
-        <p-checkbox
-          [(ngModel)]="selectedCats"
-          [label]="c"
-          name="cat-group"
-          [value]="c"
-          (onChange)="applyFilters()" />
-      </div>
+      <p-multiSelect
+        #catMs
+        [options]="cats"
+        [(ngModel)]="selectedCats"
+        name="cat-group"
+        placeholder="Todas las categorías"
+        [filter]="true"
+        filterPlaceHolder="Buscar categoría..."
+        [showToggleAll]="false"
+        [showClear]="true"
+        [maxSelectedLabels]="1"
+        selectedItemsLabel="{0} categorías"
+        emptyFilterMessage="Sin coincidencias"
+        appendTo="body"
+        [panelStyle]="{ minWidth: '260px' }"
+        styleClass="filter-multiselect"
+        panelStyleClass="filter-ms-panel"
+        (onChange)="applyFilters()"
+        (onClear)="applyFilters()">
+        <ng-template pTemplate="footer">
+          <div class="filter-ms-footer">
+            <button type="button" class="filter-ms-done" (click)="catMs.hide()">Listo</button>
+          </div>
+        </ng-template>
+      </p-multiSelect>
     </div>
+
+    <button class="clear-filters" *ngIf="hasActiveFilters()" (click)="clearFilters()">
+      Limpiar filtros
+    </button>
 
     <div class="filter-section">
       <div class="filter-label">Precio máx.</div>
@@ -82,15 +120,16 @@
       <p-card
         *ngFor="let p of filteredProducts"
         [header]="p.name"
-        [subheader]="(p.brand || '-') + ' · ' + p.category"
+        [subheader]="(p.brand || '-') + ' · ' + (p.category || '-')"
         styleClass="product-card"
+        [title]="p.name"
         (click)="openDetail(p)">
         <ng-template pTemplate="header">
           <div class="card-img">{{ getIcon(p.category) }}</div>
         </ng-template>
         <ng-template pTemplate="footer">
           <div class="card-footer">
-            <span class="card-price">S/ {{ p.unitPrice }}</span>
+            <span class="card-price">S/ {{ p.unitPrice | number:'1.0-0' }}</span>
             <span class="stock-badge" [class.in-stock]="inStock(p)" [class.out-stock]="!inStock(p)">
               {{ inStock(p) ? 'En stock (' + p.stockQuantity + ')' : 'Agotado' }}
             </span>
@@ -126,7 +165,7 @@
           <span *ngIf="!inStock(selectedProduct)">Sin existencias</span>
         </div>
 
-        <div class="modal-price">S/ {{ editMode ? editForm.unitPrice : selectedProduct?.unitPrice }}</div>
+        <div class="modal-price">S/ {{ (editMode ? editForm.unitPrice : selectedProduct?.unitPrice) | number:'1.0-0' }}</div>
 
         <div class="modal-fields">
           <div class="field-group">
@@ -143,7 +182,7 @@
           </div>
           <div class="field-group">
             <label>Precio (S/)</label>
-            <input type="number" [(ngModel)]="editForm.unitPrice" [disabled]="!editMode">
+            <input type="number" step="1" [(ngModel)]="editForm.unitPrice" [disabled]="!editMode">
           </div>
           <div class="field-group">
             <label>Unidades en stock</label>
@@ -155,7 +194,12 @@
           </div>
         </div>
 
-        <div class="modal-desc">{{ selectedProduct?.description }}</div>
+        <div class="modal-desc-wrap">
+          <div class="modal-desc" [class.expanded]="descExpanded">{{ selectedProduct?.description?.trim() || 'Sin descripción.' }}</div>
+          <button *ngIf="isLongDescription()" class="desc-toggle" (click)="descExpanded = !descExpanded">
+            {{ descExpanded ? 'Ver menos ▲' : 'Ver descripción completa ▼' }}
+          </button>
+        </div>
 
         <button *ngIf="editMode" class="btn-save" [disabled]="saving" (click)="saveEdit()">
           {{ saving ? 'Guardando...' : '✓ Guardar' }}
@@ -194,65 +238,85 @@
           </svg>
           <span class="upload-label">Arrastra tu archivo</span>
           <span class="upload-sub">o haz click para seleccionar</span>
-          <span class="upload-badge">.xlsx · .csv</span>
+          <span class="upload-badge">.xlsx</span>
+          <span class="upload-hint">Mismo formato que "Exportar inventario" (Dashboard).</span>
         </ng-container>
 
         <ng-container *ngIf="bulkFile">
           <div class="file-chip">
             <span>{{ bulkFile.name }}</span>
-            <button (click)="$event.stopPropagation(); removeFile()">×</button>
+            <button (click)="$event.stopPropagation(); removeFile()" [disabled]="bulkSaving">×</button>
           </div>
         </ng-container>
       </div>
-      <input #fileInput type="file" accept=".xlsx,.csv" style="display:none" (change)="onFileSelect($event)">
+      <input #fileInput type="file" accept=".xlsx" style="display:none" (change)="onFileSelect($event)">
 
       <!-- List area -->
       <div class="bulk-list">
+        <div *ngIf="bulkError" class="bulk-error">{{ bulkError }}</div>
+
+        <div *ngIf="bulkLoading" class="bulk-empty">
+          <div class="bulk-empty-title">Analizando archivo…</div>
+          <div class="bulk-empty-sub">Todavía no se guarda nada</div>
+        </div>
+
+        <div *ngIf="!bulkFile" class="bulk-empty">
+          <div class="bulk-empty-title">Sin datos aún</div>
+          <div class="bulk-empty-sub">Sube un archivo .xlsx para ver qué productos se crearán o actualizarán antes de guardar</div>
+          <button class="btn-template" (click)="downloadTemplate()" [disabled]="downloadingTemplate">
+            {{ downloadingTemplate ? 'Descargando…' : '↓ Descargar plantilla' }}
+          </button>
+          <div class="bulk-empty-sub">Incluye las columnas, una hoja de instrucciones y ejemplos</div>
+        </div>
+
         <!-- TAB PRODUCTOS -->
-        <ng-container *ngIf="bulkTab === 'Productos'">
-          <div *ngIf="!bulkFile" class="bulk-empty">
-            <div class="bulk-empty-title">Sin datos aún</div>
-            <div class="bulk-empty-sub">Sube un archivo .xlsx o .csv para visualizar los productos y cantidades</div>
+        <ng-container *ngIf="bulkTab === 'Productos' && bulkPreview && !bulkLoading">
+          <div class="bulk-list-header bulk-list-header-3">
+            <span>PRODUCTO</span>
+            <span style="text-align:center">ACCIÓN</span>
+            <span style="text-align:center">STOCK</span>
           </div>
-          <ng-container *ngIf="bulkFile">
-            <div class="bulk-list-header">
-              <span>PRODUCTO</span>
-              <span style="text-align:center">CANTIDAD A INGRESAR</span>
+          <div *ngFor="let row of bulkPreview.rows" class="bulk-row bulk-row-3" [class.bulk-row-has-error]="row.action === 'ERROR'">
+            <div>
+              <div class="bulk-row-name">{{ row.name || '(sin nombre)' }}</div>
+              <div class="bulk-row-meta">{{ row.sku || '(sin SKU)' }}{{ row.brand ? ' · ' + row.brand : '' }} · fila {{ row.rowNumber }}</div>
+              <div *ngIf="row.message" class="bulk-row-error">{{ row.message }}</div>
             </div>
-            <div *ngFor="let row of bulkProductsMock" class="bulk-row">
-              <div>
-                <div class="bulk-row-name">{{ row.name }}</div>
-                <div class="bulk-row-meta">{{ row.brand }}</div>
-              </div>
-              <div style="text-align:center">
-                <span class="badge-qty">{{ row.qty }}</span>
-              </div>
+            <div style="text-align:center">
+              <span class="badge-action" [ngClass]="'act-' + row.action">{{ actionLabel(row.action) }}</span>
             </div>
-          </ng-container>
+            <div style="text-align:center">
+              <ng-container *ngIf="row.action !== 'ERROR'">
+                <span *ngIf="row.oldStock != null && row.oldStock !== row.newStock" class="stock-old">{{ row.oldStock | number:'1.0-3' }} →</span>
+                <span class="badge-qty">{{ row.newStock | number:'1.0-3' }}</span>
+              </ng-container>
+              <span *ngIf="row.action === 'ERROR'" class="price-same">—</span>
+            </div>
+          </div>
         </ng-container>
 
         <!-- TAB PRECIOS -->
-        <ng-container *ngIf="bulkTab === 'Precios'">
-          <div *ngIf="!bulkFile" class="bulk-empty">
-            <div class="bulk-empty-title">Sin datos aún</div>
-            <div class="bulk-empty-sub">Sube un archivo .xlsx o .csv para visualizar los precios</div>
+        <ng-container *ngIf="bulkTab === 'Precios' && bulkPreview && !bulkLoading">
+          <div *ngIf="!bulkPriceRows().length" class="bulk-empty">
+            <div class="bulk-empty-title">Ningún precio cambia</div>
+            <div class="bulk-empty-sub">El archivo no trae precios nuevos ni diferentes a los actuales</div>
           </div>
-          <ng-container *ngIf="bulkFile">
+          <ng-container *ngIf="bulkPriceRows().length">
             <div class="bulk-list-header bulk-list-header-3">
               <span>PRODUCTO</span>
-              <span style="text-align:center">PRECIO ANTIGUO</span>
+              <span style="text-align:center">PRECIO ACTUAL</span>
               <span style="text-align:center">NUEVO PRECIO</span>
             </div>
-            <div *ngFor="let row of bulkPricesMock" class="bulk-row bulk-row-3">
+            <div *ngFor="let row of bulkPriceRows()" class="bulk-row bulk-row-3">
               <div>
                 <div class="bulk-row-name">{{ row.name }}</div>
-                <div class="bulk-row-meta">{{ row.brand }}</div>
+                <div class="bulk-row-meta">{{ row.sku }}{{ row.brand ? ' · ' + row.brand : '' }}</div>
               </div>
               <div style="text-align:center">
-                <span class="price-old">S/ {{ row.old }}</span>
+                <span class="price-old">{{ row.oldPrice != null ? 'S/ ' + (row.oldPrice | number:'1.0-0') : 'Nuevo' }}</span>
               </div>
               <div style="text-align:center">
-                <span class="price-new" [ngClass]="'price-' + priceDiff(row)">S/ {{ row.nuevo }}</span>
+                <span class="price-new" [ngClass]="'price-' + priceDiff(row)">S/ {{ row.newPrice | number:'1.0-0' }}</span>
               </div>
             </div>
           </ng-container>
@@ -262,15 +326,19 @@
 
     <!-- Footer -->
     <div class="bulk-footer">
-      <span class="bulk-summary" *ngIf="bulkTab === 'Productos'">
-        {{ bulkFile ? bulkProductsMock.length + ' productos · ' + totalUnits() + ' unidades a ingresar' : 'Sin archivo' }}
-      </span>
-      <span class="bulk-summary" *ngIf="bulkTab === 'Precios'">
-        {{ bulkFile ? bulkPricesMock.length + ' productos · ' + bulkDifferentCount() + ' con precio diferente' : 'Sin archivo' }}
+      <span class="bulk-summary">
+        <ng-container *ngIf="bulkPreview && !bulkLoading; else noSummary">
+          {{ bulkPreview.created }} nuevos · {{ bulkPreview.updated }} a actualizar ·
+          {{ bulkPreview.unchanged }} sin cambios ·
+          <span [class.summary-errors]="bulkPreview.errors > 0">{{ bulkPreview.errors }} con error (se omiten)</span>
+        </ng-container>
+        <ng-template #noSummary>{{ bulkLoading ? 'Analizando…' : 'Sin archivo' }}</ng-template>
       </span>
       <div class="bulk-footer-actions">
-        <button class="btn-cancel-bulk" (click)="closeBulk()">Cancelar</button>
-        <button class="btn-finish" [disabled]="!bulkFile" (click)="finalizeBulk()">Finalizar</button>
+        <button class="btn-cancel-bulk" (click)="closeBulk()" [disabled]="bulkSaving">Cancelar</button>
+        <button class="btn-finish" [disabled]="!canFinalizeBulk()" (click)="finalizeBulk()">
+          {{ bulkSaving ? 'Guardando…' : 'Finalizar' }}
+        </button>
       </div>
     </div>
   </div>
@@ -314,7 +382,7 @@
       <div class="create-row">
         <div class="field-group">
           <label>Precio unitario (S/) <span class="req">*</span></label>
-          <input type="number" [(ngModel)]="createForm.unitPrice" placeholder="0.00" min="0">
+          <input type="number" step="1" [(ngModel)]="createForm.unitPrice" placeholder="0" min="0">
         </div>
         <div class="field-group">
           <label>Moneda</label>

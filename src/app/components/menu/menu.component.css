@@ -1,3 +1,12 @@
+/* Navbar fijo arriba al hacer scroll; z-index bajo los modales (200) */
+:host {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--navbar-h);  /* fijo: la vista de revisión de RFQ depende de este alto */
+}
+
 ::ng-deep .p-toolbar{
   border: none;
   border-radius: 0;

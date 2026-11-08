@@ -1,7 +1,8 @@
 .checking-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 90px);
+  /* Cabe exacto en la ventana: los botones Aprobar/Rechazar quedan visibles sin scroll de página */
+  height: calc(100vh - var(--layout-offset));
   gap: 12px;
   overflow: hidden;
 }

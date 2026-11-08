@@ -16,29 +16,51 @@
       </div>
     </div>
 
-    <!-- Card: KPIs del mes -->
+    <!-- Card: KPIs con filtro de fechas -->
     <div class="dash-card">
-      <div class="card-title">KPIs del mes</div>
-      <div class="kpi-grid">
-        <div class="kpi-item">
-          <span class="kpi-value">S/28.4k</span>
+      <div class="kpi-header">
+        <div class="card-title" style="margin-bottom:0">KPIs</div>
+        <div class="kpi-filter">
+          <select [ngModel]="kpiPreset" (ngModelChange)="onPresetChange($event)" aria-label="Periodo">
+            <option *ngFor="let p of kpiPresets" [value]="p.value">{{ p.label }}</option>
+          </select>
+          <input type="date" [(ngModel)]="kpiFrom" (change)="onKpiDateChange()" [max]="kpiTo || today"
+                 [class.invalid]="kpiInvalidRange" aria-label="Desde">
+          <span class="kpi-sep">–</span>
+          <input type="date" [(ngModel)]="kpiTo" (change)="onKpiDateChange()" [min]="kpiFrom" [max]="today"
+                 [class.invalid]="kpiInvalidRange" aria-label="Hasta">
+        </div>
+      </div>
+
+      <div class="kpi-period" [class.error]="kpiInvalidRange || kpiError">
+        <ng-container *ngIf="kpiInvalidRange">Elige un rango válido: "Desde" no puede ser posterior a "Hasta".</ng-container>
+        <ng-container *ngIf="!kpiInvalidRange && kpiError">{{ kpiError }}</ng-container>
+        <ng-container *ngIf="!kpiInvalidRange && !kpiError && kpis">
+          {{ kpis.from | date:'dd/MM/yyyy' }} – {{ kpis.to | date:'dd/MM/yyyy' }}
+          · comparado con {{ kpis.previousFrom | date:'dd/MM' }} – {{ kpis.previousTo | date:'dd/MM/yyyy' }}
+        </ng-container>
+      </div>
+
+      <div class="kpi-grid" [class.loading]="kpiLoading">
+        <div class="kpi-item" title="Suma con IGV de las cotizaciones generadas en el periodo">
+          <span class="kpi-value">{{ formatMoney(cur?.totalQuoted) }}</span>
           <span class="kpi-label">Total cotizado</span>
-          <span class="kpi-badge green">+12% mes ant.</span>
+          <span class="kpi-badge" [ngClass]="totalBadge().tone">{{ totalBadge().text }}</span>
         </div>
-        <div class="kpi-item">
-          <span class="kpi-value">11</span>
+        <div class="kpi-item" title="RFQs aprobados por el operador (con cotización generada) en el periodo">
+          <span class="kpi-value">{{ cur?.approved ?? 0 }}</span>
           <span class="kpi-label">Aprobadas</span>
-          <span class="kpi-badge green">+3 este mes</span>
+          <span class="kpi-badge" [ngClass]="approvedBadge().tone">{{ approvedBadge().text }}</span>
         </div>
-        <div class="kpi-item">
-          <span class="kpi-value">3.2d</span>
+        <div class="kpi-item" title="Tiempo promedio desde que llega el correo hasta que se genera la cotización">
+          <span class="kpi-value">{{ formatDuration(cur?.avgHoursToQuote) }}</span>
           <span class="kpi-label">Tiempo prom.</span>
-          <span class="kpi-badge gray">días/cotización</span>
+          <span class="kpi-badge gray">correo → cotización</span>
         </div>
-        <div class="kpi-item">
-          <span class="kpi-value">68%</span>
+        <div class="kpi-item" title="Aprobadas / (aprobadas + rechazadas) en el periodo">
+          <span class="kpi-value">{{ formatRate(cur?.approvalRate) }}</span>
           <span class="kpi-label">Tasa aprob.</span>
-          <span class="kpi-badge gray">Meta: 70%</span>
+          <span class="kpi-badge" [ngClass]="rateBadgeTone()">Meta: {{ approvalGoal }}%</span>
         </div>
       </div>
     </div>
@@ -62,16 +84,37 @@
   <div class="dash-card">
     <div class="card-title">Reportes</div>
 
-    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding-bottom:14px; border-bottom:1px solid #e8ecf0;">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
       <div>
         <div style="font-weight:600; color:#1a2a4a; margin-bottom:4px;">Reporte de correos procesados</div>
         <div style="font-size:13px; color:#666;">
           Detalle de cada correo recibido: remitente, spam, % extracción, inventario y tiempos del pipeline.
         </div>
       </div>
-      <button class="btn-export" (click)="exportEmails()" [disabled]="exporting">
-        {{ exporting ? 'Generando...' : '↓ Descargar Excel' }}
-      </button>
+      <div class="report-actions">
+        <div class="date-range">
+          <label>
+            <span>Desde</span>
+            <input type="date" [(ngModel)]="fromDate" [max]="toDate || today" [class.invalid]="invalidRange">
+          </label>
+          <label>
+            <span>Hasta</span>
+            <input type="date" [(ngModel)]="toDate" [min]="fromDate" [max]="today" [class.invalid]="invalidRange">
+          </label>
+          <button type="button" class="btn-clear" *ngIf="hasRange" (click)="clearRange()" title="Quitar filtro de fechas">✕</button>
+        </div>
+        <button class="btn-export" (click)="exportEmails()" [disabled]="exporting || invalidRange">
+          {{ exporting ? 'Generando...' : '↓ Descargar Excel' }}
+        </button>
+      </div>
+    </div>
+    <div class="range-hint" [class.error]="invalidRange">
+      <ng-container *ngIf="invalidRange">La fecha "Desde" no puede ser posterior a "Hasta".</ng-container>
+      <ng-container *ngIf="!invalidRange && hasRange">
+        Se incluirán los correos recibidos {{ fromDate ? 'desde el ' + (fromDate | date:'dd/MM/yyyy') : '' }}
+        {{ toDate ? 'hasta el ' + (toDate | date:'dd/MM/yyyy') : 'hasta hoy' }} (ambos días inclusive).
+      </ng-container>
+      <ng-container *ngIf="!hasRange">Sin fechas se descargan todos los correos.</ng-container>
     </div>
 
     <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding-top:14px;">
