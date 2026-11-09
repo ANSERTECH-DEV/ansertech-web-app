@@ -140,3 +140,29 @@
 }
 .btn-refresh:hover:not(:disabled) { background: #f3f4f6; }
 .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Leer los últimos correos */
+.read-emails {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.read-emails-msg { font-size: 12px; color: #065f46; }
+.read-emails-msg.failed { color: #991b1b; }
+
+.btn-read-emails {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #1a2a4a;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-read-emails:hover:not(:disabled) { background: #3a8fd1; }
+.btn-read-emails:disabled { opacity: 0.6; cursor: not-allowed; }

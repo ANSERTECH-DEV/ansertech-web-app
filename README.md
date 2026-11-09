@@ -35,7 +35,7 @@ Usuarios: en la BD de Azure actual solo existen las cuentas ADMIN de los autores
 | `#/cotizaciones` | `PendingListComponent` | Lista de RFQs con tabs por estado |
 | `#/cotizaciones/:id/checking` | `ReviewDetailComponent` | Revisión del RFQ: polling cada 3 s mientras la IA procesa, tabla de stock, aprobar/rechazar |
 | `#/inventario` | `InventoryComponent` | CRUD de productos, badge de stock bajo, carga masiva desde Excel con vista previa. Filtros de marca/categoría con buscador (incluyen "Sin marca"/"Sin categoría"), tarjetas de alto uniforme y precios en soles enteros |
-| `#/dashboard` | `DashboardComponent` | Tarjeta KPIs con datos reales y filtro por periodo (`GET /api/dashboard/kpis`). Exportar Excel de correos (con rango de fechas) e inventario. Tarjeta "Conexión con Outlook" (solo ADMIN) para vincular la cuenta de correo y ver el log del servidor. "Cotizaciones por estado" y "Clientes más activos" siguen con datos mock |
+| `#/dashboard` | `DashboardComponent` | Tarjeta KPIs con datos reales y filtro por periodo (`GET /api/dashboard/kpis`). Exportar Excel de correos (con rango de fechas) e inventario. Tarjeta "Conexión con Outlook" (solo ADMIN): al pulsar **Actualizar** muestra la URL y el código de Microsoft leídos del log del backend, sin polling; también permite ver el log del servidor. "Cotizaciones por estado" y "Clientes más activos" siguen con datos mock |
 
 El detalle botón por botón está en [`../front.md`](../front.md).
 
@@ -61,7 +61,7 @@ npx ng test --watch=false --code-coverage --browsers=ChromeHeadless
 open coverage/ansertech-web-app/index.html
 ```
 
-63 specs Karma + Jasmine, todos pasan al 2026-11-08 (servicios, interceptor JWT, `ReviewDetailComponent`, `AppComponent`, filtros de `InventoryComponent`, periodo de KPIs de `DashboardComponent` y `OutlookConnectionComponent`). Resultados y cobertura: [`../docs/informe_testing.md`](../docs/informe_testing.md).
+65 specs Karma + Jasmine, todos pasan al 2026-11-09 (servicios, interceptor JWT, `ReviewDetailComponent`, `AppComponent`, filtros de `InventoryComponent`, periodo de KPIs de `DashboardComponent` y `OutlookConnectionComponent`). Resultados y cobertura: [`../docs/informe_testing.md`](../docs/informe_testing.md).
 
 ## Limitaciones conocidas
 

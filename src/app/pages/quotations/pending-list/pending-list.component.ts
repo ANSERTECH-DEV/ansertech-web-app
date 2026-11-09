@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { EmailService } from '../../../services/email.service';
 import { RfqService } from '../../../services/rfq.service';
 import { RfqResponse } from '../../../core/models/rfq.model';
 
@@ -20,7 +22,15 @@ export class PendingListComponent implements OnInit {
   totalItems: number = 0;
   refreshing = false;
 
-  constructor(private rfqService: RfqService, private router: Router) {}
+  readingEmails = false;
+  readEmailsMessage = '';
+  readEmailsFailed = false;
+
+  constructor(
+    private rfqService: RfqService,
+    private emailService: EmailService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void { this.applyFilter(); }
 
@@ -40,6 +50,26 @@ export class PendingListComponent implements OnInit {
   refresh(): void {
     this.refreshing = true;
     this.applyFilter();
+  }
+
+  /** El backend responde al instante y lee los correos en segundo plano. */
+  readLatestEmails(): void {
+    this.readingEmails = true;
+    this.readEmailsMessage = '';
+    this.readEmailsFailed = false;
+    this.emailService.triggerPolling().subscribe({
+      next: (res) => {
+        this.readingEmails = false;
+        this.readEmailsMessage = res.message;
+      },
+      error: (err: HttpErrorResponse) => {
+        this.readingEmails = false;
+        this.readEmailsFailed = true;
+        this.readEmailsMessage = err.status === 403
+          ? 'Solo un administrador puede leer los correos.'
+          : 'No se pudo iniciar la lectura de correos.';
+      }
+    });
   }
 
   getDisplayStatus(status: string): string {
