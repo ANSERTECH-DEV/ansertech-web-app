@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
@@ -14,11 +14,17 @@ describe('OutlookConnectionComponent', () => {
   const ok = (data: GraphConnection) => of({ success: true, message: '', data });
   const pending: GraphConnection = {
     status: 'PENDING', url: 'https://microsoft.com/devicelogin', code: 'ABCD2345',
-    expiresOn: '2026-11-08T22:15:00Z', source: 'MEMORY'
+    expiresOn: '2026-11-08T22:15:00Z', source: 'LOG'
+  };
+
+  const clickActualizar = () => {
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('.btn-export');
+    button.click();
+    fixture.detectChanges();
   };
 
   beforeEach(() => {
-    graphAuth = jasmine.createSpyObj('GraphAuthService', ['getStatus', 'connect', 'getLogs']);
+    graphAuth = jasmine.createSpyObj('GraphAuthService', ['getStatus', 'getLogs']);
     TestBed.configureTestingModule({
       declarations: [OutlookConnectionComponent],
       imports: [FormsModule],
@@ -28,56 +34,66 @@ describe('OutlookConnectionComponent', () => {
     component = fixture.componentInstance;
   });
 
-  it('muestra la URL y el código cuando la vinculación está pendiente', () => {
+  it('no consulta al backend hasta que se pulsa "Actualizar"', () => {
+    fixture.detectChanges();
+
+    expect(graphAuth.getStatus).not.toHaveBeenCalled();
+  });
+
+  it('"Actualizar" muestra la URL y el código leídos del log', () => {
     graphAuth.getStatus.and.returnValue(ok(pending));
     fixture.detectChanges();
+
+    clickActualizar();
 
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('ABCD2345');
     expect(text).toContain('https://microsoft.com/devicelogin');
-    expect(component.statusLabel).toBe('Esperando inicio de sesión');
-    component.ngOnDestroy();
+  });
+
+  it('no vuelve a consultar por su cuenta aunque haya un código vigente', fakeAsync(() => {
+    graphAuth.getStatus.and.returnValue(ok(pending));
+    fixture.detectChanges();
+    clickActualizar();
+
+    tick(60000);
+
+    expect(graphAuth.getStatus).toHaveBeenCalledTimes(1);
+  }));
+
+  it('no ofrece el botón "Conectar Outlook"', () => {
+    graphAuth.getStatus.and.returnValue(ok({ status: 'NOT_CONNECTED' }));
+    fixture.detectChanges();
+    clickActualizar();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Conectar Outlook');
+  });
+
+  it('avisa cuando el log no tiene un código vigente', () => {
+    graphAuth.getStatus.and.returnValue(ok({ status: 'NOT_CONNECTED' }));
+    fixture.detectChanges();
+
+    clickActualizar();
+
+    expect(fixture.nativeElement.textContent).toContain('No hay un código vigente');
   });
 
   it('se oculta para usuarios sin rol ADMIN (403)', () => {
     graphAuth.getStatus.and.returnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
     fixture.detectChanges();
 
+    clickActualizar();
+
     expect(component.visible).toBeFalse();
     expect(fixture.nativeElement.querySelector('.dash-card')).toBeNull();
   });
 
-  it('mientras está pendiente consulta cada 5 s y deja de hacerlo al conectarse', fakeAsync(() => {
-    graphAuth.getStatus.and.returnValues(ok(pending), ok({ status: 'CONNECTED' }));
-    fixture.detectChanges();
-    expect(graphAuth.getStatus).toHaveBeenCalledTimes(1);
-
-    tick(OutlookConnectionComponent.POLL_MS);
-    expect(graphAuth.getStatus).toHaveBeenCalledTimes(2);
-    expect(component.status).toBe('CONNECTED');
-
-    tick(OutlookConnectionComponent.POLL_MS * 2);
-    expect(graphAuth.getStatus).toHaveBeenCalledTimes(2);
-    discardPeriodicTasks();
-  }));
-
-  it('"Conectar Outlook" llama a connect y muestra el código devuelto', () => {
-    graphAuth.getStatus.and.returnValue(ok({ status: 'NOT_CONNECTED' }));
-    graphAuth.connect.and.returnValue(ok(pending));
+  it('muestra un error si no se puede contactar al servidor', () => {
+    graphAuth.getStatus.and.returnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
     fixture.detectChanges();
 
-    component.connect();
-    fixture.detectChanges();
+    clickActualizar();
 
-    expect(graphAuth.connect).toHaveBeenCalled();
-    expect(fixture.nativeElement.textContent).toContain('ABCD2345');
-    component.ngOnDestroy();
-  });
-
-  it('muestra el error devuelto por el backend', () => {
-    graphAuth.getStatus.and.returnValue(ok({ status: 'ERROR', error: 'El código venció' }));
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.textContent).toContain('El código venció');
+    expect(fixture.nativeElement.textContent).toContain('No se pudo contactar al servidor');
   });
 });

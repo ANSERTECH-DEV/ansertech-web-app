@@ -1,15 +1,14 @@
 <div class="dash-card" *ngIf="visible">
   <div class="oc-header">
     <div class="card-title" style="margin-bottom:0">Conexión con Outlook</div>
-    <span class="oc-badge" [ngClass]="status | lowercase">{{ statusLabel }}</span>
   </div>
 
   <p class="oc-help">
-    El backend lee y envía correos con la cuenta de Outlook vinculada. Si la sesión venció,
-    genera un código e ingrésalo en la página de Microsoft con esa cuenta.
+    Pulsa <strong>Actualizar</strong> para ver la URL y el código que Microsoft generó para el backend.
+    Luego abre el enlace e ingresa el código con la cuenta de Outlook.
   </p>
 
-  <div class="oc-pending" *ngIf="status === 'PENDING' && connection?.code">
+  <div class="oc-pending" *ngIf="hasCode">
     <div class="oc-step">1. Abre
       <a [href]="connection?.url" target="_blank" rel="noopener">{{ connection?.url }}</a>
     </div>
@@ -19,22 +18,20 @@
       <button type="button" class="btn-secondary" (click)="copyCode()">{{ copied ? 'Copiado' : 'Copiar' }}</button>
     </div>
     <div class="oc-meta">
-      Vence a las {{ connection?.expiresOn | date:'HH:mm' }}. Esta tarjeta se actualiza sola cuando termines.
+      Vence a las {{ connection?.expiresOn | date:'HH:mm' }}. Si ya lo ingresaste, no necesitas hacer nada más.
     </div>
   </div>
 
-  <div class="oc-ok" *ngIf="status === 'CONNECTED'">
-    Token vigente{{ connection?.timestamp ? ' (verificado ' + (connection?.timestamp | date:'dd/MM/yyyy HH:mm') + ')' : '' }}.
+  <div class="oc-empty" *ngIf="consulted && !hasCode && !error">
+    No hay un código vigente en el log del backend.
   </div>
 
-  <div class="oc-error" *ngIf="status === 'ERROR' && connection?.error">{{ connection?.error }}</div>
   <div class="oc-error" *ngIf="error">{{ error }}</div>
 
   <div class="oc-actions">
-    <button type="button" class="btn-export" (click)="connect()" [disabled]="connecting || status === 'PENDING'">
-      {{ connecting ? 'Conectando...' : (status === 'CONNECTED' ? 'Verificar conexión' : 'Conectar Outlook') }}
+    <button type="button" class="btn-export" (click)="refresh()" [disabled]="loading">
+      {{ loading ? 'Actualizando...' : 'Actualizar' }}
     </button>
-    <button type="button" class="btn-secondary" (click)="refresh()" [disabled]="loading">Actualizar</button>
     <button type="button" class="btn-link" (click)="toggleLogs()">{{ showLogs ? 'Ocultar log' : 'Ver log del servidor' }}</button>
   </div>
 

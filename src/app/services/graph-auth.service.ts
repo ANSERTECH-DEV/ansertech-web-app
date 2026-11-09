@@ -16,10 +16,6 @@ export class GraphAuthService {
     return this.http.get<ApiResponse<GraphConnection>>(`${this.apiUrl}/auth/graph/device-code`);
   }
 
-  connect(): Observable<ApiResponse<GraphConnection>> {
-    return this.http.post<ApiResponse<GraphConnection>>(`${this.apiUrl}/auth/graph/connect`, {});
-  }
-
   getLogs(lines = 50): Observable<string> {
     const params = new HttpParams().set('lines', lines);
     return this.http.get(`${this.apiUrl}/admin/logs`, { params, responseType: 'text' });
