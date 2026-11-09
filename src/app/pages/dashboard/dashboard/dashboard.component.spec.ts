@@ -1,3 +1,4 @@
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormsModule } from '@angular/forms';
@@ -24,6 +25,7 @@ describe('DashboardComponent (KPIs)', () => {
     getKpis = jasmine.createSpy('getKpis').and.returnValue(of({ success: true, message: '', data: response({}, {}) }));
     TestBed.configureTestingModule({
       declarations: [DashboardComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],  // <app-outlook-connection> tiene su propio spec
       imports: [HttpClientTestingModule, FormsModule],
       providers: [{ provide: DashboardService, useValue: { getKpis } }]
     });
