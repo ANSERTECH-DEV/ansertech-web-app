@@ -1,0 +1,56 @@
+<div class="dash-card">
+  <div class="pm-header">
+    <div class="card-title" style="margin-bottom:0">Parámetros</div>
+    <button type="button" class="btn-secondary" (click)="load()" [disabled]="loading">
+      {{ loading ? 'Cargando...' : 'Recargar' }}
+    </button>
+  </div>
+  <p class="pm-help">Valores que usa la aplicación. Solo un administrador puede editarlos.</p>
+
+  <div class="pm-error" *ngIf="loadError">{{ loadError }}</div>
+  <div class="pm-empty" *ngIf="!loading && !loadError && parameters.length === 0">No hay parámetros registrados.</div>
+
+  <div class="pm-table-wrap" *ngIf="parameters.length > 0">
+    <table class="pm-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th>Valor</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let p of parameters">
+          <tr>
+            <td class="pm-name">{{ p.name }}</td>
+            <td class="pm-desc">{{ p.description || '-' }}</td>
+            <td class="pm-value">
+              <input *ngIf="editingId === p.id; else showValue" type="number" class="pm-input"
+                     [(ngModel)]="draft" [disabled]="saving" maxlength="255"
+                     (keyup.enter)="save(p)" (keyup.escape)="cancel()" [attr.aria-label]="'Valor de ' + p.name">
+              <ng-template #showValue>
+                <span>{{ p.value }}</span>
+                <span class="pm-saved" *ngIf="savedId === p.id">Guardado</span>
+              </ng-template>
+            </td>
+            <td class="pm-actions">
+              <ng-container *ngIf="editingId === p.id; else editBtn">
+                <button type="button" class="btn-primary" (click)="save(p)" [disabled]="saving">
+                  {{ saving ? 'Guardando...' : 'Guardar' }}
+                </button>
+                <button type="button" class="btn-secondary" (click)="cancel()" [disabled]="saving">Cancelar</button>
+              </ng-container>
+              <ng-template #editBtn>
+                <button type="button" class="btn-secondary" (click)="startEdit(p)" [disabled]="editingId !== null">Editar</button>
+              </ng-template>
+            </td>
+          </tr>
+          <tr *ngIf="editingId === p.id && rowError">
+            <td colspan="4"><div class="pm-error">{{ rowError }}</div></td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+</div>

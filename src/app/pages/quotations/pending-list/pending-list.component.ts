@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { EmailService } from '../../../services/email.service';
+import { ParameterService } from '../../../services/parameter.service';
 import { RfqService } from '../../../services/rfq.service';
 import { RfqResponse } from '../../../core/models/rfq.model';
 
@@ -20,9 +23,35 @@ export class PendingListComponent implements OnInit {
   totalItems: number = 0;
   refreshing = false;
 
-  constructor(private rfqService: RfqService, private router: Router) {}
+  readingEmails = false;
+  readEmailsMessage = '';
+  readEmailsFailed = false;
+  /** Valor del parámetro "Cantidad de correos"; null si aún no llega o no se pudo leer. */
+  emailCount: number | null = null;
 
-  ngOnInit(): void { this.applyFilter(); }
+  constructor(
+    private rfqService: RfqService,
+    private emailService: EmailService,
+    private parameterService: ParameterService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.applyFilter();
+    this.loadEmailCount();
+  }
+
+  get readEmailsLabel(): string {
+    if (!this.emailCount) return 'Leer los últimos correos';
+    return this.emailCount === 1 ? 'Leer el último correo' : `Leer los últimos ${this.emailCount} correos`;
+  }
+
+  private loadEmailCount(): void {
+    this.parameterService.getEmailCount().subscribe({
+      next: (res) => { this.emailCount = res.data ?? null; },
+      error: () => { this.emailCount = null; }
+    });
+  }
 
   applyFilter(): void {
     this.rfqService.getRfqs(this.activeTab).subscribe({
@@ -40,6 +69,26 @@ export class PendingListComponent implements OnInit {
   refresh(): void {
     this.refreshing = true;
     this.applyFilter();
+  }
+
+  /** El backend responde al instante y lee los correos en segundo plano. */
+  readLatestEmails(): void {
+    this.readingEmails = true;
+    this.readEmailsMessage = '';
+    this.readEmailsFailed = false;
+    this.emailService.triggerPolling().subscribe({
+      next: (res) => {
+        this.readingEmails = false;
+        this.readEmailsMessage = res.message;
+      },
+      error: (err: HttpErrorResponse) => {
+        this.readingEmails = false;
+        this.readEmailsFailed = true;
+        this.readEmailsMessage = err.status === 403
+          ? 'Solo un administrador puede leer los correos.'
+          : 'No se pudo iniciar la lectura de correos.';
+      }
+    });
   }
 
   getDisplayStatus(status: string): string {
