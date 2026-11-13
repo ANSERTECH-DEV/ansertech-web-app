@@ -1,0 +1,30 @@
+/* Mismo estilo que las tarjetas del dashboard (los estilos de DashboardComponent no llegan aquí por el encapsulamiento) */
+.dash-card { background: #fff; border: 1px solid #dde3ef; border-radius: 10px; padding: 16px 18px; }
+.card-title { font-size: 13px; font-weight: 700; color: #1a2a4a; margin-bottom: 14px; }
+
+.pm-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.pm-help { font-size: 13px; color: #666; margin: 0 0 12px; }
+
+.pm-table-wrap { overflow-x: auto; }
+.pm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.pm-table th { text-align: left; font-size: 11px; font-weight: 600; color: #8896b0; letter-spacing: 0.4px; padding: 6px 8px; border-bottom: 1px solid #dde3ef; }
+.pm-table td { padding: 8px; border-bottom: 1px solid #eef1f7; vertical-align: middle; }
+
+.pm-name { font-weight: 600; color: #1a2a4a; white-space: nowrap; }
+.pm-desc { color: #4a5568; min-width: 200px; }
+.pm-value { font-family: ui-monospace, Menlo, Consolas, monospace; color: #1a2a4a; white-space: nowrap; }
+.pm-input { width: 120px; height: 30px; padding: 0 8px; border: 1px solid #cfd6df; border-radius: 6px; font-size: 13px; font-family: inherit; }
+.pm-input:focus { outline: none; border-color: #3a8fd1; }
+.pm-saved { margin-left: 8px; font-family: inherit; font-size: 11px; font-weight: 600; color: #065f46; background: #d1fae5; border-radius: 999px; padding: 2px 8px; }
+
+.pm-actions { text-align: right; white-space: nowrap; }
+.pm-actions button + button { margin-left: 6px; }
+
+.pm-error { font-size: 13px; color: #991b1b; background: #fee2e2; border-radius: 6px; padding: 8px 10px; word-break: break-word; }
+.pm-empty { font-size: 13px; color: #4a5568; background: #eef1f7; border-radius: 6px; padding: 8px 10px; }
+
+.btn-primary { background: #1a2a4a; color: #fff; border: none; border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-primary:hover:not(:disabled) { background: #3a8fd1; }
+.btn-secondary { background: #fff; color: #1a2a4a; border: 1px solid #cfd6df; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-secondary:hover:not(:disabled) { border-color: #3a8fd1; color: #3a8fd1; }
+.btn-primary:disabled, .btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }

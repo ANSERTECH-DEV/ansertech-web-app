@@ -89,7 +89,7 @@
   <div class="read-emails">
     <span class="read-emails-msg" *ngIf="readEmailsMessage" [class.failed]="readEmailsFailed">{{ readEmailsMessage }}</span>
     <button type="button" class="btn-read-emails" (click)="readLatestEmails()" [disabled]="readingEmails">
-      Leer los últimos correos
+      {{ readEmailsLabel }}
     </button>
   </div>
 </div>
