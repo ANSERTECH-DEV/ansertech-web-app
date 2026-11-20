@@ -14,8 +14,8 @@
   </ng-template>
   <ng-template pTemplate="end">
     <div class="navbar-user">
-      <div class="user-avatar">JR</div>
-      <span class="user-name">Juan Reyes</span>
+      <div class="user-avatar" [attr.aria-hidden]="true">{{ initials }}</div>
+      <span class="user-name" [title]="email">{{ displayName }}</span>
       <button class="logout-btn" (click)="logout()">↩</button>
     </div>
   </ng-template>

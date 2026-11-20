@@ -73,6 +73,72 @@ describe('InventoryComponent — filtros', () => {
     expect(component.maxPrice).toBe(1000);
   });
 
+  it('busca por nombre, código o marca (ignora espacios al inicio/fin)', () => {
+    component.searchText = '  sku-5 ';
+    component.onSearch();
+    expect(component.filteredProducts.map(p => p.id)).toEqual([5]);
+
+    component.searchText = 'hanna';
+    component.onSearch();
+    expect(component.filteredProducts.map(p => p.id)).toEqual([5]);
+  });
+
+  it('solo con texto en el buscador ya cuenta como filtro activo', () => {
+    component.searchText = 'Producto 1';
+    component.onSearch();
+    expect(component.hasActiveFilters()).toBeTrue();
+
+    component.searchText = '   ';
+    expect(component.hasActiveFilters()).toBeFalse();
+  });
+
+  it('"Limpiar filtros" con texto + marca vuelve al inventario completo y vacía el buscador (caso H5)', () => {
+    component.searchText = 'Producto';
+    component.selectedBrands = ['HANNA'];
+    component.applyFilters();
+    expect(component.filteredProducts.length).toBe(1);
+
+    component.clearFilters();
+    fixture.detectChanges();
+
+    expect(component.searchText).toBe('');
+    expect(component.filteredProducts.length).toBe(5);
+    expect(fixture.nativeElement.querySelector('.clear-filters')).toBeNull();
+  });
+
+  it('la ✕ del desplegable (modelo en null) vuelve a mostrar todo sin errores', () => {
+    component.selectedBrands = ['HANNA', 'Zeta', 'ácido'];
+    component.selectedCats = ['EPP'];
+    component.applyFilters();
+    fixture.detectChanges();
+
+    component.selectedBrands = null as unknown as string[];   // lo que hace p-multiSelect al pulsar la ✕
+    component.selectedCats = null as unknown as string[];
+    component.applyFilters();
+
+    expect(() => fixture.detectChanges()).not.toThrow();
+    expect(component.selectedBrands).toEqual([]);
+    expect(component.selectedCats).toEqual([]);
+    expect(component.hasActiveFilters()).toBeFalse();
+    expect(component.filteredProducts.length).toBe(5);
+  });
+
+  it('la ✕ real del p-multiSelect de marca limpia la selección', async () => {
+    component.selectedBrands = ['HANNA', 'Zeta', 'ácido'];
+    component.applyFilters();
+    fixture.detectChanges();
+    await fixture.whenStable();   // ngModel escribe el valor de forma asíncrona; recién ahí aparece la ✕
+    fixture.detectChanges();
+
+    const clearIcon: HTMLElement | null = fixture.nativeElement.querySelector('.filter-multiselect .p-multiselect-clear-icon');
+    expect(clearIcon).withContext('ícono ✕ del multiSelect').not.toBeNull();
+    clearIcon!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(() => fixture.detectChanges()).not.toThrow();
+
+    expect(component.selectedBrands).toEqual([]);
+    expect(component.filteredProducts.length).toBe(5);
+  });
+
   it('"Limpiar filtros" reinicia marca, categoría, precio y stock', () => {
     component.selectedBrands = ['HANNA'];
     component.selectedCats = ['EPP'];

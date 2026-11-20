@@ -37,8 +37,14 @@ export class InventoryComponent implements OnInit {
   /* Sidebar filters */
   brands: string[] = [];
   cats: string[] = [];
-  selectedBrands: string[] = [];
-  selectedCats: string[] = [];
+  // La ✕ (showClear) de p-multiSelect deja el modelo en null, no en []: se normaliza aquí para que
+  // hasActiveFilters()/applyFilters() nunca lean null.length (la vista quedaba congelada con un TypeError).
+  private _selectedBrands: string[] = [];
+  private _selectedCats: string[] = [];
+  get selectedBrands(): string[] { return this._selectedBrands; }
+  set selectedBrands(value: string[] | null | undefined) { this._selectedBrands = value ?? []; }
+  get selectedCats(): string[] { return this._selectedCats; }
+  set selectedCats(value: string[] | null | undefined) { this._selectedCats = value ?? []; }
   maxPrice = 6000;
   priceMax = 6000;
   onlyStock = false;
@@ -134,7 +140,7 @@ export class InventoryComponent implements OnInit {
   }
 
   applyFilters(): void {
-    const search = this.searchText.toLowerCase();
+    const search = this.searchText.trim().toLowerCase();
     this.filteredProducts = this.allProducts.filter(p => {
       if (search &&
           !p.name.toLowerCase().includes(search) &&
@@ -149,11 +155,14 @@ export class InventoryComponent implements OnInit {
   }
 
   hasActiveFilters(): boolean {
-    return this.selectedBrands.length > 0 || this.selectedCats.length > 0
+    return this.searchText.trim() !== ''
+      || this.selectedBrands.length > 0 || this.selectedCats.length > 0
       || this.maxPrice < this.priceMax || this.onlyStock;
   }
 
+  /** Vuelve al inventario completo: también borra el texto del buscador. */
   clearFilters(): void {
+    this.searchText = '';
     this.selectedBrands = [];
     this.selectedCats = [];
     this.maxPrice = this.priceMax;

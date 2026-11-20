@@ -94,7 +94,7 @@
       <div>
         <div style="font-weight:600; color:#1a2a4a; margin-bottom:4px;">Reporte de correos procesados</div>
         <div style="font-size:13px; color:#666;">
-          Detalle de cada correo recibido: remitente, spam, % extracción, inventario y tiempos del pipeline.
+          Detalle de cada correo procesado: remitente, spam, % extracción, inventario y tiempos del pipeline.
         </div>
       </div>
       <div class="report-actions">
@@ -117,8 +117,10 @@
     <div class="range-hint" [class.error]="invalidRange">
       <ng-container *ngIf="invalidRange">La fecha "Desde" no puede ser posterior a "Hasta".</ng-container>
       <ng-container *ngIf="!invalidRange && hasRange">
-        Se incluirán los correos recibidos {{ fromDate ? 'desde el ' + (fromDate | date:'dd/MM/yyyy') : '' }}
+        Se incluirán los correos procesados por el sistema (columna "Fecha Gestión")
+        {{ fromDate ? 'desde el ' + (fromDate | date:'dd/MM/yyyy') : '' }}
         {{ toDate ? 'hasta el ' + (toDate | date:'dd/MM/yyyy') : 'hasta hoy' }} (ambos días inclusive).
+        Su "Fecha recibido" puede ser anterior si el correo llegó a Outlook antes de leerse.
       </ng-container>
       <ng-container *ngIf="!hasRange">Sin fechas se descargan todos los correos.</ng-container>
     </div>

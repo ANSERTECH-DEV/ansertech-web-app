@@ -178,7 +178,9 @@
           <div *ngIf="isStockFailed" class="stock-failed">
             <div>⚠ Error en el análisis de stock</div>
             <div class="stock-failed-msg" *ngIf="stockResult?.errorMessage">{{ stockResult!.errorMessage }}</div>
-            <button class="btn-retry-stock" (click)="refreshStockCheck()">Reintentar</button>
+            <button class="btn-retry-stock" (click)="retryStockCheck()" [disabled]="retryingStock">
+              {{ retryingStock ? 'Reintentando…' : 'Reintentar' }}
+            </button>
           </div>
 
           <!-- DONE: tabla de resultados -->
@@ -216,6 +218,14 @@
             <span><span class="legend-dot green"></span> Stock suficiente</span>
             <span><span class="legend-dot red"></span> Stock insuficiente / no encontrado</span>
           </div>
+
+          <div class="stock-reanalyze" *ngIf="isStockDone && rfq?.status === 'PENDING_REVIEW'">
+            <button class="btn-reanalyze-stock" (click)="retryStockCheck()" [disabled]="retryingStock"
+                    title="Vuelve a buscar los ítems en el inventario con Gemini">
+              {{ retryingStock ? 'Enviando…' : '↻ Volver a analizar con IA' }}
+            </button>
+          </div>
+          <div class="stock-retry-error" *ngIf="retryError" role="alert">{{ retryError }}</div>
         </div>
 
         <div class="analysis-card" *ngIf="quotation">

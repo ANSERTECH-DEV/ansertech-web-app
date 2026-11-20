@@ -12,7 +12,7 @@ describe('ParametersComponent', () => {
   let service: jasmine.SpyObj<ParameterService>;
 
   const emailCount: Parameter = {
-    id: 1, name: 'Cantidad de correos', value: '2',
+    id: 1, name: 'Cantidad de correos', value: 2,
     description: 'Cantidad máxima de correos no leídos que consulta el polling manual.'
   };
   const ok = <T>(data: T) => of({ success: true, message: '', data });
@@ -39,10 +39,10 @@ describe('ParametersComponent', () => {
   });
 
   it('guarda el nuevo valor y lo muestra en la tabla', () => {
-    service.updateValue.and.returnValue(ok({ ...emailCount, value: '10' }));
+    service.updateValue.and.returnValue(ok({ ...emailCount, value: 10 }));
 
     component.startEdit(emailCount);
-    component.draft = ' 10 ';
+    component.draft = 10;
     component.save(emailCount);
     fixture.detectChanges();
 
@@ -54,7 +54,7 @@ describe('ParametersComponent', () => {
 
   it('no envía un valor vacío', () => {
     component.startEdit(emailCount);
-    component.draft = '   ';
+    component.draft = null;
     component.save(emailCount);
     fixture.detectChanges();
 
@@ -68,7 +68,7 @@ describe('ParametersComponent', () => {
     })));
 
     component.startEdit(emailCount);
-    component.draft = '0';
+    component.draft = 7;
     component.save(emailCount);
     fixture.detectChanges();
 
@@ -80,16 +80,27 @@ describe('ParametersComponent', () => {
     service.updateValue.and.returnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
 
     component.startEdit(emailCount);
-    component.draft = '5';
+    component.draft = 5;
     component.save(emailCount);
     fixture.detectChanges();
 
     expect(text()).toContain('Solo un administrador puede editar parámetros');
   });
 
+  it('rechaza en el navegador valores fuera de 1 a 10', () => {
+    for (const bad of [0, 11, 2.5]) {
+      component.startEdit(emailCount);
+      component.draft = bad;
+      component.save(emailCount);
+      fixture.detectChanges();
+      expect(text()).toContain('entre 1 y 10');
+    }
+    expect(service.updateValue).not.toHaveBeenCalled();
+  });
+
   it('cancelar descarta el cambio', () => {
     component.startEdit(emailCount);
-    component.draft = '99';
+    component.draft = 99;
     component.cancel();
     fixture.detectChanges();
 

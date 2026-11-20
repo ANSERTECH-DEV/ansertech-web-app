@@ -113,6 +113,40 @@ describe('ReviewDetailComponent', () => {
     expect(component.isStockDone).toBeTrue();
   }));
 
+  it('"Reintentar" tras FAILED vuelve a ejecutar el análisis y sondea hasta DONE', fakeAsync(() => {
+    createComponent();
+    component.ngOnInit();
+    flushRfq('PROCESSING');
+    flushStockCheck('FAILED', { errorMessage: 'Gemini (Vertex AI) alcanzó su límite de uso.' });
+
+    component.retryStockCheck();
+    const retry = httpMock.expectOne(`${rfqUrl}/42/stock-check/retry`);
+    expect(retry.request.method).toBe('POST');
+    retry.flush({ success: true, data: { rfqId: 42, status: 'PROCESSING' } });
+    expect(component.isStockProcessing).toBeTrue();
+
+    tick(3000);
+    flushStockCheck('DONE', { items: [{ rfqItemId: 1, matched: true }, { rfqItemId: 2, matched: false }] });
+    flushRfq('PENDING_REVIEW');
+    expect(component.isStockDone).toBeTrue();
+    expect(component.rfq?.status).toBe('PENDING_REVIEW');
+  }));
+
+  it('"Volver a analizar" en Por aprobar pasa el RFQ a Procesando y muestra el error del backend si falla', fakeAsync(() => {
+    createComponent();
+    component.ngOnInit();
+    flushRfq('PENDING_REVIEW');
+    flushStockCheck('DONE', { items: [] });
+
+    component.retryStockCheck();
+    httpMock.expectOne(`${rfqUrl}/42/stock-check/retry`).flush(
+      { success: false, message: "Solo se puede volver a analizar el stock de un RFQ en 'Procesando' o 'Por aprobar'" },
+      { status: 400, statusText: 'Bad Request' });
+
+    expect(component.retryingStock).toBeFalse();
+    expect(component.retryError).toContain('Solo se puede volver a analizar');
+  }));
+
   it('ngOnDestroy detiene el polling: tras destruir, tick(3000) no genera más peticiones', fakeAsync(() => {
     createComponent();
     component.ngOnInit();

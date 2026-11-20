@@ -46,4 +46,9 @@ export class RfqService {
   stockCheck(id: number): Observable<ApiResponse<StockCheckResultResponse>> {
     return this.http.get<ApiResponse<StockCheckResultResponse>>(`${this.apiUrl}/${id}/stock-check`);
   }
+
+  /** Vuelve a ejecutar el matching de inventario con Gemini (responde PROCESSING; luego se sondea stockCheck). */
+  retryStockCheck(id: number): Observable<ApiResponse<StockCheckResultResponse>> {
+    return this.http.post<ApiResponse<StockCheckResultResponse>>(`${this.apiUrl}/${id}/stock-check/retry`, {});
+  }
 }
