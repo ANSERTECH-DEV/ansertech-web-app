@@ -18,6 +18,8 @@ export class ReviewDetailComponent implements OnInit, OnDestroy {
   rejecting = false;
   stockResult?: StockCheckResultResponse;
   loadingStock = false;
+  retryingStock = false;
+  retryError = '';
 
   private pollInterval?: ReturnType<typeof setInterval>;
 
@@ -89,6 +91,30 @@ export class ReviewDetailComponent implements OnInit, OnDestroy {
   refreshStockCheck(): void {
     if (!this.rfq) return;
     this.loadStockCheck(this.rfq.id);
+  }
+
+  /**
+   * "Reintentar" (tras FAILED) y "Volver a analizar" (en Por aprobar): pide al backend que vuelva a ejecutar
+   * el matching con Gemini y sondea hasta que termine. Antes "Reintentar" solo volvía a leer el resultado fallido.
+   */
+  retryStockCheck(): void {
+    if (!this.rfq || this.retryingStock) return;
+    const id = this.rfq.id;
+    this.retryingStock = true;
+    this.retryError = '';
+    this.stopPolling();
+    this.rfqService.retryStockCheck(id).subscribe({
+      next: res => {
+        this.retryingStock = false;
+        this.stockResult = res.data;
+        if (this.rfq) this.rfq = { ...this.rfq, status: 'PROCESSING' };
+        this.startPolling(id);
+      },
+      error: err => {
+        this.retryingStock = false;
+        this.retryError = err?.error?.message || 'No se pudo volver a analizar el stock.';
+      }
+    });
   }
 
   private startPolling(rfqId: number): void {

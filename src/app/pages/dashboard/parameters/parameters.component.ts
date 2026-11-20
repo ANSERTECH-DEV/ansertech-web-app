@@ -15,7 +15,7 @@ export class ParametersComponent implements OnInit {
   loadError = '';
 
   editingId: number | null = null;
-  draft = 0;
+  draft: number | null = null;
   saving = false;
   rowError = '';
   savedId: number | null = null;
@@ -49,17 +49,17 @@ export class ParametersComponent implements OnInit {
 
   save(parameter: Parameter): void {
     const value = this.draft;
-    if (!value) {
+    if (value === null || value === undefined || `${value}`.trim() === '') {
       this.rowError = 'El valor no puede estar vacío.';
       return;
     }
-    if (+value < 1  || +value >= 10 ) {
-      this.rowError = 'El valor debe estar entre 1 a 10.';
+    if (!Number.isInteger(+value) || +value < 1 || +value > 10) {
+      this.rowError = 'El valor debe ser un número entero entre 1 y 10.';
       return;
     }
     this.saving = true;
     this.rowError = '';
-    this.parameterService.updateValue(parameter.id, value.toString()).subscribe({
+    this.parameterService.updateValue(parameter.id, `${value}`.trim()).subscribe({
       next: res => {
         this.saving = false;
         this.parameters = this.parameters.map(p => (p.id === parameter.id ? res.data : p));

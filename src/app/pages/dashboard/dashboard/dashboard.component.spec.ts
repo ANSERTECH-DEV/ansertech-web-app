@@ -74,4 +74,23 @@ describe('DashboardComponent (KPIs)', () => {
     expect(component.formatDuration(null)).toBe('—');
     expect(component.formatRate(null)).toBe('—');
   });
+
+  it('el aviso del reporte de correos indica que filtra por "Fecha Gestión" (H2)', () => {
+    component.fromDate = '2026-11-01';
+    component.toDate = '2026-11-06';
+    fixture.detectChanges();
+    const hint: string = fixture.nativeElement.querySelector('.range-hint').textContent;
+    expect(hint).toContain('procesados por el sistema');
+    expect(hint).toContain('Fecha Gestión');
+    expect(hint).toContain('01/11/2026');
+    expect(hint).toContain('06/11/2026');
+    expect(hint).not.toContain('correos recibidos');
+  });
+
+  it('nombre del reporte de correos: sin fechas es "inicio_a_<hoy>" (H7) y con rango usa sus fechas', () => {
+    expect(component.emailReportFilename()).toBe(`reporte-correos_inicio_a_${component.today}.xlsx`);
+    component.fromDate = '2026-11-01';
+    component.toDate = '2026-11-06';
+    expect(component.emailReportFilename()).toBe('reporte-correos_2026-11-01_a_2026-11-06.xlsx');
+  });
 });

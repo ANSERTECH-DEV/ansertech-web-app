@@ -17,6 +17,7 @@
             type="email"
             class="form-control"
             [(ngModel)]="email"
+            (ngModelChange)="clearError()"
             name="email"
             placeholder="usuario@empresa.pe"
             required>
@@ -28,12 +29,17 @@
             type="password"
             class="form-control"
             [(ngModel)]="password"
+            (ngModelChange)="clearError()"
             name="password"
             placeholder="••••••••"
             required>
         </div>
 
-        <button type="submit" class="btn-login">Ingresar</button>
+        <div class="login-error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+        <button type="submit" class="btn-login" [disabled]="loading">
+          {{ loading ? 'Ingresando…' : 'Ingresar' }}
+        </button>
       </form>
     </div>
   </div>

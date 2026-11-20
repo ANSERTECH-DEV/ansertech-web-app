@@ -8,7 +8,27 @@ import { AuthService } from '../../services/auth.service';
   styleUrls: ['./menu.component.css']
 })
 export class MenuComponent {
-  constructor(private authService: AuthService, private router: Router) {}
+  /** Nombre que se muestra arriba a la derecha: users.full_name; si no hay, el correo. */
+  displayName = 'Usuario';
+  initials = 'U';
+  email = '';
+
+  constructor(private authService: AuthService, private router: Router) {
+    const user = this.authService.getUser();
+    this.email = user?.email ?? '';
+    this.displayName = user?.fullName?.trim() || user?.email || 'Usuario';
+    this.initials = MenuComponent.toInitials(user?.fullName?.trim() || user?.email || 'Usuario');
+  }
+
+  /** "Rony Piero Ticona Luque" → "RL" (primera y última palabra); "ana@x.pe" → "A". */
+  static toInitials(text: string): string {
+    const base = text.includes('@') ? text.split('@')[0] : text;
+    const words = base.split(/[\s._-]+/).filter(Boolean);
+    if (words.length === 0) return 'U';
+    const first = words[0][0];
+    const last = words.length > 1 ? words[words.length - 1][0] : '';
+    return (first + (text.includes('@') ? '' : last)).toUpperCase();
+  }
 
   /**
    * Logs out the current user and redirects to the login page.

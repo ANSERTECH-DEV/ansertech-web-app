@@ -91,4 +91,18 @@ describe('AuthService', () => {
     service.saveToken('mi-token');
     expect(service.isAuthenticated()).toBeTrue();
   });
+
+  it('saveUser()/getUser() guardan el nombre completo y logout() lo borra', () => {
+    service.saveUser({ fullName: 'Jorge Quilla', email: 'g@x.pe', role: 'ADMIN' });
+    expect(service.getUser()).toEqual({ fullName: 'Jorge Quilla', email: 'g@x.pe', role: 'ADMIN' });
+
+    service.logout();
+    expect(service.getUser()).toBeNull();
+  });
+
+  it('getUser() sin usuario guardado usa el correo del token (claim sub)', () => {
+    const payload = btoa(JSON.stringify({ sub: 'piero@ansertech.pe' })).replace(/=+$/, '');
+    service.saveToken(`h.${payload}.s`);
+    expect(service.getUser()).toEqual({ fullName: null, email: 'piero@ansertech.pe', role: null });
+  });
 });

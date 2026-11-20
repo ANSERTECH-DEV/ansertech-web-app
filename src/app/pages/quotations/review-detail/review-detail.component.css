@@ -443,6 +443,20 @@
   cursor: pointer;
 }
 .btn-retry-stock:hover { background: #fee2e2; }
+.btn-retry-stock:disabled, .btn-reanalyze-stock:disabled { opacity: .6; cursor: not-allowed; }
+
+.stock-reanalyze { margin-top: 8px; text-align: right; }
+.btn-reanalyze-stock {
+  padding: 3px 10px;
+  font-size: 11px;
+  background: #fff;
+  color: #3a8fd1;
+  border: 1px solid #3a8fd1;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.btn-reanalyze-stock:hover:not(:disabled) { background: #eaf4fc; }
+.stock-retry-error { margin-top: 6px; font-size: 11px; color: #dc2626; text-align: right; }
 
 /* Refresh button next to stock title */
 .btn-refresh-stock {

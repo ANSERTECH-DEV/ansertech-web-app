@@ -198,8 +198,8 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  private emailReportFilename(): string {
-    if (!this.hasRange) return `reporte-correos-${this.today}.xlsx`;
+  /** Mismo nombre que arma el backend (EmailController.reportFilename): reporte-correos_{desde|inicio}_a_{hasta|hoy}.xlsx */
+  emailReportFilename(): string {
     return `reporte-correos_${this.fromDate || 'inicio'}_a_${this.toDate || this.today}.xlsx`;
   }
 
